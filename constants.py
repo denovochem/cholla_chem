@@ -260,4 +260,30 @@ COUNTER_ACIDS = {'hcl': 'hydrochloride',
  'acoh': 'acetate',
  '2acoh': 'diacetate'}
 
+PREFIX_MAP = {
+ 'me': 'methyl-',
+ '(me)': 'methyl-',
+ 'et': 'ethyl-',
+ '(et)': 'ethyl-',
+ 'ac': 'acetyl-',
+ '(ac)': 'acetyl-',
+ 'for': 'formyl-',
+ '(for)': 'formyl-',
+ 'bz': 'benzoyl-',
+ '(bz)': 'benzoyl-',
+ 'cbz': 'carbobenzyloxy-',
+ '(cbz)': 'carbobenzyloxy-',
+ 'z': 'carbobenzyloxy-',
+ '(z)': 'carbobenzyloxy-',
+ 'boc': 'tert-butoxycarbonyl-',
+ '(boc)': 'tert-butoxycarbonyl-',
+ 'fmoc': 'fluorenylmethoxycarbonyl-',
+ '(fmoc)': 'fluorenylmethoxycarbonyl-',
+ 'ts': 'tosyl-',
+ '(ts)': 'tosyl-',
+ 'ms': 'mesyl-',
+ '(ms)': 'mesyl-',
+ 'tf': 'trifluoroacetyl-',
+ '(tf)': 'trifluoroacetyl-'}
+
 GREEK_LETTERS = ['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω']
