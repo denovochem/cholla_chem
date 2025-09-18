@@ -5,7 +5,7 @@ def generate_side_chain_protections():
     protections = {}
     
     # Generate standard combinations
-    for aa_code, (aa_name, site) in AMINO_ACIDS.items():
+    for aa_code, (aa_name, site) in AA_FULL.items():
         for pg_code, pg_name in PROTECTING_GROUPS.items():
             key = f"{aa_code}({pg_code})"
             
@@ -120,7 +120,6 @@ def process_amino_acid_token(next_token, is_last, is_cyclic, stereo_prefix='l-')
     if base_aa:
         # Known amino acid
         if is_last_updated:
-            print(base_aa, is_last_updated)
             base = base_aa
         else:
             # Convert to -yl form
