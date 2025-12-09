@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import re
 from typing import List, Tuple, Dict
 import warnings
 
@@ -400,13 +401,15 @@ def select_smiles_with_criteria(
         smiles_selection_mode (str): The method to select the SMILES representation from multiple resolvers.
 
     Returns:
-        None
+        XXX
     """
     selector = SMILESSelector(compounds_out_dict, resolvers_weight_dict)
     for k,v in compounds_out_dict.items():
         selected_smiles, selected_smiles_resolvers = selector.select_smiles(k, smiles_selection_mode)
         v['SMILES'] = selected_smiles
         v['SMILES_source'] = selected_smiles_resolvers
+    
+    return compounds_out_dict
 
 
 def resolve_compounds_to_smiles(
@@ -414,7 +417,8 @@ def resolve_compounds_to_smiles(
     resolvers_list: List[ChemicalNameResolver] = [],
     smiles_selection_mode: str = 'weighted',
     detailed_name_dict: bool = False,
-    batch_size: int = 500
+    batch_size: int = 500,
+    split_names_to_solve: bool = True,
 ) -> Dict[str, str]:
     """
     Resolve a list of compound names to their SMILES representations.
@@ -428,6 +432,8 @@ def resolve_compounds_to_smiles(
         detailed_name_dict (bool, optional): If True, returns a dictionary with detailed information about each compound.
             Defaults to False.
         batch_size (int, optional): The number of compounds to process in each batch. Defaults to 500.
+        split_names_to_solve (bool, optional): Whether to split compound names on common delimiters to solve them as separate compounds.
+            Can be used to solve otherwise unresolvable compound names such as H₂O•THF. Defaults to True.
 
     Returns:
         Dict[str, str]: A dictionary mapping each compound to its SMILES representation.
@@ -477,29 +483,34 @@ def resolve_compounds_to_smiles(
         raise TypeError("Invalid input: batch_size must be an integer.")
     if batch_size <= 0 or batch_size > 1000:
         raise ValueError("Invalid input: batch_size must be an integer between 1-1000.")
+    
+    if not isinstance(split_names_to_solve, bool):
+        raise ValueError("Invalid input: split_names_to_solve must be a bool.")
 
     # Clean compound names (strip, remove/replace forbidden characters, etc.) and return a mapping dict
     cleaned_compounds_list, cleaned_compounds_dict = clean_strings_and_return_mapping(compounds_list)
     
-    # Split compound names on delimiters, add split parts to compounds list
-    # Return mapping between original compound names and split parts
-    # Necessary to resolve names like H₂O•THF
-    compounds_and_split_parts, delimiter_split_dict = split_compounds_on_delimiters_and_return_mapping(cleaned_compounds_list) 
+    if split_names_to_solve:
+        # Split compound names on delimiters, add split parts to compounds list
+        # Return mapping between original compound names and split parts
+        # Necessary to resolve names like H₂O•THF
+        cleaned_compounds_list, delimiter_split_dict = split_compounds_on_delimiters_and_return_mapping(cleaned_compounds_list) 
 
     # Resolve compounds and split compound names with resolvers
-    resolvers_out_dict = resolve_compounds_using_resolvers(compounds_and_split_parts, resolvers_list, batch_size)
+    resolvers_out_dict = resolve_compounds_using_resolvers(cleaned_compounds_list, resolvers_list, batch_size)
 
     # Assemble the resolution dictionary
     compounds_out_dict = assemble_compounds_resolution_dict(compounds_list, resolvers_out_dict, cleaned_compounds_dict)
 
-    # Resolve compounds that were split with split_compounds_on_delimiters_and_return_mapping
-    compounds_out_dict = assemble_split_compounds_resolution_dict(compounds_out_dict, compounds_list, resolvers_out_dict, cleaned_compounds_dict, delimiter_split_dict)
+    if split_names_to_solve:
+        # Resolve compounds that were split with split_compounds_on_delimiters_and_return_mapping
+        compounds_out_dict = assemble_split_compounds_resolution_dict(compounds_out_dict, compounds_list, resolvers_out_dict, cleaned_compounds_dict, delimiter_split_dict)
 
     # Get the resolvers weight dict - needed for SMILESSelector
     resolvers_weight_dict = get_resolvers_weight_dict(resolvers_list)
 
     # Select "best" SMILES according to some criteria, add to resolution dict
-    select_smiles_with_criteria(compounds_out_dict, resolvers_weight_dict, smiles_selection_mode)
+    compounds_out_dict = select_smiles_with_criteria(compounds_out_dict, resolvers_weight_dict, smiles_selection_mode)
 
     if not detailed_name_dict:
         return {k:v.get('SMILES', '') for k, v in compounds_out_dict.items()}
@@ -508,4 +519,4 @@ def resolve_compounds_to_smiles(
 
 
 if __name__ == "__main__":    
-    print(resolve_compounds_to_smiles(['benzene', 'aspirin', 'stab', 'Asp-Gly', 'CH3CH2OH', 'CH3CH(OH)COOH', 'H₂O', 'H₂O.THF'], detailed_name_dict=False))
+    print(resolve_compounds_to_smiles(['benzene', 'aspirin', 'stab', 'Asp-Gly', 'CH3CH2OH', 'CH3CH(OH)COOH', 'H₂O', 'H₂O.THF'], detailed_name_dict=True))
