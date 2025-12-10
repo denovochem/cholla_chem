@@ -3,7 +3,7 @@ import re
 from typing import List, Tuple, Dict
 import warnings
 
-from name_manipulation.split_names import get_delimiter_split_dict, resolve_delimiter_split_dict
+from placeholder_name.name_manipulation.split_names import get_delimiter_split_dict, resolve_delimiter_split_dict
 from resolvers.manual_resolver import name_to_smiles_manual
 from resolvers.opsin_resolver import name_to_smiles_opsin
 from resolvers.pubchem_resolver import name_to_smiles_pubchem
