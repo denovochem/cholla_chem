@@ -4,16 +4,16 @@ from typing import List, Tuple, Dict
 import warnings
 
 from placeholder_name.name_manipulation.split_names import get_delimiter_split_dict, resolve_delimiter_split_dict
-from resolvers.manual_resolver import name_to_smiles_manual
-from resolvers.opsin_resolver import name_to_smiles_opsin
-from resolvers.pubchem_resolver import name_to_smiles_pubchem
-from resolvers.cirpy_resolver import name_to_smiles_cirpy
-from resolvers.peptide_resolver import name_to_smiles_peptide
-from resolvers.structural_formula_resolver import name_to_smiles_structural_formula
-from smiles_selector import SMILESSelector
-from utils.chem_utils import canonicalize_smiles
-from utils.logging_config import logger
-from utils.string_utils import clean_strings
+from placeholder_name.resolvers.manual_resolver import name_to_smiles_manual
+from placeholder_name.resolvers.opsin_resolver import name_to_smiles_opsin
+from placeholder_name.resolvers.pubchem_resolver import name_to_smiles_pubchem
+from placeholder_name.resolvers.cirpy_resolver import name_to_smiles_cirpy
+from placeholder_name.resolvers.peptide_resolver import name_to_smiles_peptide
+from placeholder_name.resolvers.structural_formula_resolver import name_to_smiles_structural_formula
+from placeholder_name.smiles_selector import SMILESSelector
+from placeholder_name.utils.chem_utils import canonicalize_smiles
+from placeholder_name.utils.logging_config import logger
+from placeholder_name.utils.string_utils import clean_strings
 
 class ChemicalNameResolver(ABC):
     """

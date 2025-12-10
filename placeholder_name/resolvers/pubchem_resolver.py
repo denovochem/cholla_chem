@@ -1,6 +1,6 @@
 import pubchempy as pcp
-from utils.string_utils import filter_latin1_compatible
-from utils.logging_config import logger
+from placeholder_name.utils.string_utils import filter_latin1_compatible
+from placeholder_name.utils.logging_config import logger
 from typing import List, Dict
 
 def name_to_smiles_pubchem(compound_name_list: List[str]) -> Dict[str, str]:

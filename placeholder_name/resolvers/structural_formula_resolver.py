@@ -36,7 +36,7 @@ from enum import Enum, auto
 from collections import defaultdict
 from abc import ABC, abstractmethod
 
-from utils.logging_config import logger
+from placeholder_name.utils.logging_config import logger
 
 
 # =============================================================================

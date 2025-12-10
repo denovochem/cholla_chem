@@ -1,7 +1,7 @@
 from itertools import product
-from utils.constants import DELIMITERS
-from utils.logging_config import logger
-from utils.chem_utils import canonicalize_smiles
+from placeholder_name.utils.constants import DELIMITERS
+from placeholder_name.utils.logging_config import logger
+from placeholder_name.utils.chem_utils import canonicalize_smiles
 from typing import List, Dict, Tuple
 
 def get_delimiter_split_dict(

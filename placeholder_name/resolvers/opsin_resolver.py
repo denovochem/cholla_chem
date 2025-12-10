@@ -1,6 +1,6 @@
 from typing import List, Tuple, Dict
 from py2opsin import py2opsin
-from utils.logging_config import logger
+from placeholder_name.utils.logging_config import logger
 
 
 def name_to_smiles_opsin(

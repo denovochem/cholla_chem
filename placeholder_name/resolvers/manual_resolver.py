@@ -1,5 +1,5 @@
 from pathlib import Path
-from utils.logging_config import logger
+from placeholder_name.utils.logging_config import logger
 from typing import Dict, List
 import json
 
