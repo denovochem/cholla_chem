@@ -2,10 +2,18 @@ from pathlib import Path
 from placeholder_name.utils.logging_config import logger
 from typing import Dict, List
 import json
+from importlib import resources
+
 
 # Get the directory of the current file
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_MANUAL_NAME_DICT = BASE_DIR.parent / 'datafiles' / 'name_dicts' / 'manual_name_dict.json'
+
+def load_default_manual_name_dict() -> Dict[str, str]:
+    """Load manual name dictionary from package data using importlib.resources."""
+    # Open the file as text from within the package
+    with resources.open_text('placeholder_name.datafiles.name_dicts', 'manual_name_dict.json') as f:
+        return json.load(f)
 
 def process_name_dict(
     compound_name_list: List[str], 
@@ -50,8 +58,7 @@ def name_to_smiles_manual(
     manual_name_dict = {}
     compound_name_dict_lower = {ele.lower():ele for ele in compound_name_list}
     if not provided_name_dict:
-        with open(DEFAULT_MANUAL_NAME_DICT, 'rb') as handle:
-            loaded_manual_name_dict = json.load(handle)
+        loaded_manual_name_dict = load_default_manual_name_dict()
         logger.info(f"Loaded data from {DEFAULT_MANUAL_NAME_DICT}.")
     else:
         loaded_manual_name_dict = provided_name_dict

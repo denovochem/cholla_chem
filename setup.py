@@ -11,6 +11,11 @@ setup(
     name='placeholder_name',
     version='0.0.1',
     packages=find_packages(),
+    package_data={
+        'placeholder_name': [
+            'datafiles/name_dicts/*.json',
+        ],
+    },
     include_package_data=True,
     zip_safe=False,
     install_requires=read_file('requirements.txt').splitlines(),
@@ -31,5 +36,5 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.9',
 )
