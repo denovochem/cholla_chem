@@ -1,6 +1,7 @@
 from utils.constants import AMINO_ACID_SUB_SITES, PROTECTING_GROUPS, SPECIAL_CASES, AA_FULL, N_CAPS, C_CAPS, COUNTER_ACIDS, GREEK_LETTERS, PREFIX_MAP
 from resolvers.opsin_resolver import name_to_smiles_opsin
 from utils.logging_config import logger
+from typing import List, Dict
 
 def generate_side_chain_protections():
     """Generate the complete side chain protections dictionary"""
@@ -278,8 +279,17 @@ def peptide_shorthand_to_iupac(shorthand: str) -> str:
         
     return name
 
-def name_to_smiles_peptide(peptides: list) -> list:
+def name_to_smiles_peptide(peptides: List[str]) -> Tuple[Dict[str, str], Dict[str, str]]:
+    """
+    Converts a list of peptide shorthand names to their corresponding SMILES strings by first 
+    converting the shorthand to an IUPAC-like name, then resolving that with OPSIN.
 
+    Args:
+        peptides (List[str]): A list of peptide shorthand names to be converted.
+
+    Returns:
+        Tuple[Dict[str, str], Dict[str, str]]: A tuple containing two dictionaries. The first dictionary maps each peptide shorthand name to its SMILES string, and the second dictionary maps each peptide shorthand name that failed conversion to its error message.
+    """
     peptide_iupac_names = []
     peptide_iupac_to_shorthand_mapping = {}
     for peptide in peptides:

@@ -519,4 +519,4 @@ def resolve_compounds_to_smiles(
 
 
 if __name__ == "__main__":    
-    print(resolve_compounds_to_smiles(['benzene', 'aspirin', 'stab', 'Asp-Gly', 'CH3CH2OH', 'CH3CH(OH)COOH', 'H₂O', 'H₂O.THF'], detailed_name_dict=True))
+    print(resolve_compounds_to_smiles(['benzene', 'aspirin', 'stab', 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)', 'CH3CH2OH', 'CH3CH(OH)COOH', 'H₂O', 'H₂O.THF',], detailed_name_dict=True))
