@@ -22,7 +22,7 @@ from placeholder_name.utils.logging_config import configure_logging, logger
 from placeholder_name.utils.string_utils import clean_strings
 
 # Configure loguru logging
-configure_logging(level="DEBUG")
+configure_logging(level="WARNING")
 
 # Ignore all RuntimeWarnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -36,7 +36,6 @@ class ChemicalNameResolver(ABC):
     Abstract base class for chemical name-to-SMILES resolvers.
     
     Subclasses must implement the `name_to_smiles` method.
-    Optionally, they may expose a `config` property for runtime settings.
     """
 
     def __init__(self, resolver_type: str, resolver_name: str, resolver_weight: float):
@@ -65,13 +64,13 @@ class ChemicalNameResolver(ABC):
     @abstractmethod
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES strings.
 
         Args:
-            chemical_name_list: List of chemical names.
+            compound_name_list: List of chemical names.
 
         Returns:
             Tuple of:
@@ -104,13 +103,13 @@ class OpsinNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using OPSIN.
         """
         resolved_names, failure_message_dict = name_to_smiles_opsin(
-                                                                    chemical_name_list,
+                                                                    compound_name_list,
                                                                     allow_acid=self._allow_acid,
                                                                     allow_radicals=self._allow_radicals,
                                                                     allow_bad_stereo=self._allow_bad_stereo,
@@ -129,12 +128,12 @@ class PubChemNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using pubchem.
         """
-        resolved_names = name_to_smiles_pubchem(chemical_name_list)
+        resolved_names = name_to_smiles_pubchem(compound_name_list)
         return resolved_names, {}
 
 
@@ -148,12 +147,12 @@ class CIRpyNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using cirpy.
         """
-        resolved_names = name_to_smiles_cirpy(chemical_name_list)
+        resolved_names = name_to_smiles_cirpy(compound_name_list)
         return resolved_names, {}
 
 
@@ -175,7 +174,7 @@ class ManualNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str],
+        compound_name_list: List[str],
         provided_name_dict: Dict[str, str] = None
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
@@ -183,7 +182,7 @@ class ManualNameResolver(ChemicalNameResolver):
         """
         if provided_name_dict is None:
             provided_name_dict = self._provided_name_dict
-        resolved_names = name_to_smiles_manual(chemical_name_list, provided_name_dict)
+        resolved_names = name_to_smiles_manual(compound_name_list, provided_name_dict)
         return resolved_names, {}
 
 
@@ -198,12 +197,12 @@ class PeptideNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using peptide name converter and OPSIN.
         """
-        resolved_names, failure_message_dict = name_to_smiles_peptide(chemical_name_list)
+        resolved_names, failure_message_dict = name_to_smiles_peptide(compound_name_list)
         return resolved_names, failure_message_dict
 
 
@@ -217,12 +216,12 @@ class StructuralFormulaNameResolver(ChemicalNameResolver):
 
     def name_to_smiles(
         self,
-        chemical_name_list: List[str]
+        compound_name_list: List[str]
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using structural formula converter.
         """
-        resolved_names = name_to_smiles_structural_formula(chemical_name_list)
+        resolved_names = name_to_smiles_structural_formula(compound_name_list)
         return resolved_names, {}
 
 
@@ -451,7 +450,7 @@ def resolve_compounds_to_smiles(
             Defaults to False.
         batch_size (int, optional): The number of compounds to process in each batch. Defaults to 500.
         split_names_to_solve (bool, optional): Whether to split compound names on common delimiters to solve them as separate compounds.
-            Can be used to solve otherwise unresolvable compound names such as H₂O•THF. Defaults to True.
+            Can be used to solve otherwise unresolvable compound names such as BH3•THF. Defaults to True.
 
     Returns:
         Dict[str, str]: A dictionary mapping each compound to its SMILES representation.

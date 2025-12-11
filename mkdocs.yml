@@ -24,7 +24,7 @@ plugins:
             show_root_heading: true
 
 nav:
-  - Home: index.md
+  - Quick Start: index.md
   - Installation: installation.md
   - Getting Started: getting_started.md
   - Resolvers: resolvers.md

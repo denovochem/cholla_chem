@@ -15,10 +15,17 @@ smiles_selection_mode, in addition to taking any of the above arguments, can als
 from placeholder_name.main import resolve_compounds_to_smiles
 from typing import Dict, List, Tuple
 
-def reverse_alphabetical(smiles_dict: Dict[str, List[str]], **kwargs) -> Tuple[str, List[str]]:
+def reverse_alphabetical(
+    smiles_dict: Dict[str, List[str]], 
+    **kwargs
+) -> Tuple[str, List[str]]:
+
     smiles = sorted(smiles_dict.keys())[-1]
     return smiles, smiles_dict[smiles]
 
-resolved_smiles = resolve_compounds_to_smiles(['aspirin'], smiles_selection_mode=reverse_alphabetical)
+resolved_smiles = resolve_compounds_to_smiles(
+    ['aspirin'], 
+    smiles_selection_mode=reverse_alphabetical
+)
 ```
 

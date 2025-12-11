@@ -1,21 +1,25 @@
 # placeholder_name
 [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.python.org/pypi/PubChemPy)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/name_to_smiles/blob/main/LICENSE)
-[![Tests](https://img.shields.io/github/actions/workflow/status/mcs07/pubchempy/test.yml?logo=github&logoColor=%23ffffff&label=tests)](https://github.com/mcs07/PubChemPy/actions/workflows/test.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/denovochem/name_to_smiles/tests.yml?logo=github&logoColor=%23ffffff&label=tests)](https://github.com/denovochem/name_to_smiles/actions/workflows/tests.yml)
 [![Docs](https://img.shields.io/readthedocs/pubchempy?logo=readthedocs&logoColor=%23ffffff)](https://denovochem.github.io/name_to_smiles/)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
 This library uses the following existing name-to-SMILES resolvers:
-- OPSIN
-- PubChem
-- CIRpy
+- [py2opsin](https://github.com/csnbritt/py2opsin)
+- [PubChemPy](https://github.com/csnbritt/PubChemPy)
+- [CIRpy](https://github.com/mcs07/CIRpy)
 
-This library implements the following new resolvers and resolution strategies:
+This library implements the following new resolvers:
 - Manual database of common names not resolved by other resolvers
 - Structural formula resolver (e.g. CH3CH2CH2COOH)
 - Peptide shorthand resolver (e.g. Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)
-- Mixtures of compounds (e.g. H₂O•THF)
+
+The following string editing/manipulation strategies may be applied to any compounds
+- Splitting compounds on common delimiters (useful for mixtures of compounds, e.g. BH3•THF)
+
+When different resolvers disagree on the SMILES for a given compound, different SMILES selection methods can be employed to determine the "best" SMILES for a given compound name. See the documentation for more details.
 
 ## Installation
 
@@ -32,11 +36,22 @@ from placeholder_name import resolve_compounds_to_smiles
 resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
 '{'aspirin': 'CC(=O)Oc1ccccc1C(=O)O'}'
 ```
+
 See detailed information including which resolver returned which SMILES with detailed_name_dict=True:
 ```pycon
 from placeholder_name import resolve_compounds_to_smiles
-resolved_smiles = resolve_compounds_to_smiles(['2-acetyloxybenzoic acid'], detailed_name_dict=True)
-"{'2-acetyloxybenzoic acid': {'SMILES': 'CC(=O)Oc1ccccc1C(=O)O', 'SMILES_source': ['pubchem_default', 'opsin_default'], 'SMILES_dict': {'CC(=O)Oc1ccccc1C(=O)O': ['pubchem_default', 'opsin_default']}, 'info_messages': {}}}"
+resolved_smiles = resolve_compounds_to_smiles(
+    ['2-acetyloxybenzoic acid'], 
+    detailed_name_dict=True
+)
+"{'2-acetyloxybenzoic acid': {
+    'SMILES': 'CC(=O)Oc1ccccc1C(=O)O',
+    'SMILES_source': ['pubchem_default', 'opsin_default'],
+    'SMILES_dict': {
+        'CC(=O)Oc1ccccc1C(=O)O': ['pubchem_default', 'opsin_default']
+    },
+    'info_messages': {}
+}}"
 ```
 
 ## Advanced usage
@@ -51,8 +66,20 @@ opsin_resolver = OpsinNameResolver('opsin', resolver_weight=4)
 pubchem_resolver =  PubChemNameResolver('pubchem', resolver_weight=3)
 cirpy_resolver = CIRpyNameResolver('cirpy', resolver_weight=2)
 
-resolved_smiles = resolve_compounds_to_smiles(['2-acetyloxybenzoic acid'], [opsin_resolver, pubchem_resolver, cirpy_resolver], smiles_selection_mode='weighted', detailed_name_dict=True)
-'{'2-acetyloxybenzoic acid': {'SMILES': 'CC(=O)Oc1ccccc1C(=O)O', 'SMILES_source': ['opsin', 'pubchem', 'cirpy'], 'SMILES_dict': {'CC(=O)Oc1ccccc1C(=O)O': ['opsin', 'pubchem', 'cirpy']}, 'info_messages': {}}}'
+resolved_smiles = resolve_compounds_to_smiles(
+    ['2-acetyloxybenzoic acid'],
+    [opsin_resolver, pubchem_resolver, cirpy_resolver],
+    smiles_selection_mode='weighted',
+    detailed_name_dict=True
+)
+"{'2-acetyloxybenzoic acid': {
+    'SMILES': 'CC(=O)Oc1ccccc1C(=O)O',
+    'SMILES_source': ['opsin', 'pubchem', 'cirpy'],
+    'SMILES_dict': {
+        'CC(=O)Oc1ccccc1C(=O)O': ['opsin', 'pubchem', 'cirpy']
+    },
+    'info_messages': {}
+}}"
 ```
 
 ## Documentation
