@@ -688,8 +688,6 @@ class StructuralFormulaParser:
         Prefers single > double > triple to avoid overbonding.
         Returns inferred bond order, defaulting to SINGLE if uncertain.
         """
-        atom1 = self.graph.get_atom(atom1_idx)
-        atom2 = self.graph.get_atom(atom2_idx)
         
         def get_remaining_valence(atom: Atom) -> int:
             element = atom.element
@@ -703,7 +701,12 @@ class StructuralFormulaParser:
                 target_valence = 3
                 if atom.charge != 0:
                     target_valence = max(possible_valences)
-            elif element in ('C', 'S', 'P'):
+            if element == 'S':
+                # Prefer 2 for neutral S unless already bonded beyond that
+                target_valence = 2
+                if atom.charge != 0:
+                    target_valence = max(possible_valences)
+            elif element in ('C', 'P'):
                 target_valence = max(possible_valences)
             else:
                 target_valence = min(possible_valences)  # O, F, Cl, etc.
@@ -718,6 +721,18 @@ class StructuralFormulaParser:
             total_used = used_by_bonds + used_by_h
             remaining = target_valence - total_used
             return max(0, remaining)
+        
+        def is_aromatic(atom_idx: int) -> bool:
+            for _, bo in self.graph.get_neighbors(atom_idx):
+                if bo == BondOrder.AROMATIC:
+                    return True
+            return False
+
+        if is_aromatic(atom1_idx) or is_aromatic(atom2_idx):
+            return BondOrder.SINGLE
+        
+        atom1 = self.graph.get_atom(atom1_idx)
+        atom2 = self.graph.get_atom(atom2_idx)
         
         rem1 = get_remaining_valence(atom1)
         rem2 = get_remaining_valence(atom2)
@@ -1139,17 +1154,13 @@ class StructuralFormulaParser:
 class SMILESGenerator:
     """
     Generates SMILES strings from molecular graphs using DFS traversal.
-    
-    Handles ring closures by:
-    1. First pass: DFS to identify all ring-closing (back) edges
-    2. Second pass: DFS to generate SMILES with ring closure numbers
     """
     
     def __init__(self, graph: MolecularGraph):
         self.graph = graph
         self.visited: Set[int] = set()
-        self.ring_closures: Dict[Tuple[int, int], Tuple[int, BondOrder]] = {}  # (a1, a2) -> (ring_num, bond_order)
-        self.atom_ring_closures: Dict[int, List[Tuple[int, BondOrder]]] = defaultdict(list)  # atom_idx -> [(ring_num, bond_order), ...]
+        self.ring_closures: Dict[Tuple[int, int], Tuple[int, BondOrder]] = {}
+        self.atom_ring_closures: Dict[int, List[Tuple[int, BondOrder]]] = defaultdict(list)
         self.next_ring_num: int = 1
     
     def generate(self) -> str:
@@ -1157,38 +1168,43 @@ class SMILESGenerator:
         if self.graph.is_empty():
             return ""
         
-        # Reset state
         self.visited.clear()
         self.ring_closures.clear()
         self.atom_ring_closures.clear()
         self.next_ring_num = 1
         
-        # Find best starting atom
         start = self._find_start_atom()
-        
-        # Pass 1: Find all ring-closing bonds
         self._find_ring_closures(start, -1)
-        
-        # Pass 2: Generate SMILES with ring numbers
         self.visited.clear()
         return self._dfs(start, -1, BondOrder.SINGLE)
     
     def _find_start_atom(self) -> int:
         """Find a good starting atom for SMILES generation."""
-        # Prefer terminal atoms (degree 1) or failing that, first atom
+        # Prefer terminal atoms (degree 1), but deprioritize oxygen (often =O)
+        terminal_atoms = []
         for i, atom in enumerate(self.graph.atoms):
             neighbors = self.graph.get_neighbors(i)
             if len(neighbors) == 1:
-                return i
+                terminal_atoms.append((i, atom.element))
+        
+        if terminal_atoms:
+            # Prefer C > other > O for starting (so we don't start from =O)
+            def start_priority(item):
+                idx, elem = item
+                if elem == 'C':
+                    return (0, idx)
+                elif elem == 'O':
+                    return (2, idx)
+                else:
+                    return (1, idx)
+            
+            terminal_atoms.sort(key=start_priority)
+            return terminal_atoms[0][0]
+        
         return 0
     
     def _find_ring_closures(self, atom_idx: int, parent_idx: int) -> None:
-        """
-        First DFS pass to identify ring-closing bonds.
-        
-        A ring-closing bond is a "back edge" - a bond to an already-visited
-        atom that isn't the parent.
-        """
+        """First DFS pass to identify ring-closing bonds."""
         self.visited.add(atom_idx)
         
         for neighbor_idx, bond_order in self.graph.get_neighbors(atom_idx):
@@ -1196,19 +1212,27 @@ class SMILESGenerator:
                 continue
             
             if neighbor_idx in self.visited:
-                # Back edge found - this is a ring closure
-                # Use canonical key (smaller index first) to avoid duplicates
                 key = (min(atom_idx, neighbor_idx), max(atom_idx, neighbor_idx))
                 if key not in self.ring_closures:
                     ring_num = self.next_ring_num
                     self.next_ring_num += 1
                     self.ring_closures[key] = (ring_num, bond_order)
-                    # Record that both atoms need this ring closure number
                     self.atom_ring_closures[atom_idx].append((ring_num, bond_order))
                     self.atom_ring_closures[neighbor_idx].append((ring_num, bond_order))
             else:
-                # Tree edge - continue DFS
                 self._find_ring_closures(neighbor_idx, atom_idx)
+    
+    def _is_aromatic_atom(self, atom_idx: int) -> bool:
+        """Check if an atom is part of an aromatic system."""
+        for _, bond_order in self.graph.get_neighbors(atom_idx):
+            if bond_order == BondOrder.AROMATIC:
+                return True
+        return False
+    
+    def _is_ring_closure_edge(self, atom1_idx: int, atom2_idx: int) -> bool:
+        """Check if the edge between two atoms is a ring-closing edge."""
+        key = (min(atom1_idx, atom2_idx), max(atom1_idx, atom2_idx))
+        return key in self.ring_closures
     
     def _dfs(self, atom_idx: int, parent_idx: int, incoming_bond: BondOrder) -> str:
         """Second DFS pass to build SMILES string with ring closures."""
@@ -1220,25 +1244,18 @@ class SMILESGenerator:
         
         result = ""
         
-        # Add bond symbol (except for first atom or single bonds)
+        # Add bond symbol (except for first atom, single bonds, or aromatic bonds)
         if parent_idx >= 0 and incoming_bond not in [BondOrder.SINGLE, BondOrder.AROMATIC]:
             result += incoming_bond.to_smiles_symbol()
         
-        aromatic_symbol = False
-        if incoming_bond == BondOrder.AROMATIC:
-            aromatic_symbol = True
+        # Determine if atom should be written as aromatic (lowercase)
+        is_aromatic = self._is_aromatic_atom(atom_idx)
+        
         # Add atom symbol
-        result += self._format_atom(atom, aromatic_symbol)
+        result += self._format_atom(atom, is_aromatic)
         
         # Add ring closure numbers for this atom
         for ring_num, ring_bond_order in self.atom_ring_closures.get(atom_idx, []):
-            # For non-single bonds in ring closures, add bond symbol before ring number
-            # (only needed on one side, we add it on the first encounter)
-            if ring_bond_order != BondOrder.SINGLE and ring_bond_order != BondOrder.AROMATIC:
-                # Check if this is the "opening" of the ring (first time we see this ring num)
-                # We add the bond symbol only once
-                pass  # For simplicity, aromatic rings work without explicit bond symbols
-            
             if ring_num < 10:
                 result += str(ring_num)
             else:
@@ -1249,34 +1266,68 @@ class SMILESGenerator:
         for neighbor_idx, bond_order in self.graph.get_neighbors(atom_idx):
             if neighbor_idx == parent_idx:
                 continue
+            if self._is_ring_closure_edge(atom_idx, neighbor_idx):
+                continue
             if neighbor_idx in self.visited:
-                # This is a ring-closure edge, already handled via ring numbers
                 continue
             neighbors.append((neighbor_idx, bond_order))
         
         if not neighbors:
             return result
         
-        # Sort neighbors to get consistent output
-        # Put hydrogens and halogens last as they're typically terminal
+        # Sort neighbors for consistent and chemically sensible output
         def neighbor_priority(item):
             n, bo = item
-            elem = self.graph.get_atom(n).element
+            neighbor_atom = self.graph.get_atom(n)
+            elem = neighbor_atom.element
+            neighbor_is_aromatic = self._is_aromatic_atom(n)
+            
+            # Priority levels (higher = main chain, lower = branch):
+            # 5: Aromatic bond continuation (ring traversal)
+            # 4: Single bond to aromatic atom (ring attachment point)
+            # 3: Regular carbon chain continuation
+            # 2: Other atoms
+            # 1: Double-bonded O (carbonyl - should be branch)
+            # 0: Halogens and H (terminal, should be branch)
+            
+            if bo == BondOrder.AROMATIC:
+                return (5, 0, elem)
+            
+            if neighbor_is_aromatic:
+                return (4, 0, elem)
+            
+            # Hydrogens go in branches
             if elem == 'H':
-                return (2, elem)
+                return (0, 2, elem)
+            
+            # Halogens go in branches
             if elem in ('F', 'Cl', 'Br', 'I'):
-                return (1, elem)
-            return (0, elem)
+                return (0, 1, elem)
+            
+            # Double-bonded O (carbonyl oxygen) should be a branch
+            if elem == 'O' and bo == BondOrder.DOUBLE:
+                return (1, 0, elem)
+            
+            # Double-bonded S (thioketone) should be a branch
+            if elem == 'S' and bo == BondOrder.DOUBLE:
+                return (1, 0, elem)
+            
+            # Carbon continues chain
+            if elem == 'C':
+                return (3, 0, elem)
+            
+            # Other atoms
+            return (2, 0, elem)
         
         neighbors.sort(key=neighbor_priority)
         
-        # All but last go in branches
+        # All but last go in branches (with parentheses)
         for neighbor_idx, bond_order in neighbors[:-1]:
             branch = self._dfs(neighbor_idx, atom_idx, bond_order)
             if branch:
                 result += f"({branch})"
         
-        # Last continues main chain
+        # Last neighbor continues main chain (no parentheses)
         last_neighbor, last_bond = neighbors[-1]
         result += self._dfs(last_neighbor, atom_idx, last_bond)
         
@@ -1293,7 +1344,7 @@ class SMILESGenerator:
         needs_brackets = (
             element.upper() not in ORGANIC_SUBSET or
             atom.charge != 0 or
-            (element == 'H' and atom.implicit_h_count == 0)  # Explicit H
+            (element.upper() == 'H' and atom.implicit_h_count == 0)
         )
         
         if needs_brackets:
@@ -1477,115 +1528,76 @@ def run_tests():
         # ("(C2H5)2O", "diethyl ether", "CCOCC"),
         ("HOCH2CH(OH)CH2OH", "glycerol", "OCC(O)CO"),
         
-        # ("C6H5CH2OH", "benzyl alcohol", "OCc1ccccc1"),
+        ("C6H5CH2OH", "benzyl alcohol", "OCc1ccccc1"),
         ("C6H5NH2", "aniline", "Nc1ccccc1"),
         # ("C6H5NO2", "nitrobenzene", "[O-][N+](=O)c1ccccc1"),
-        # ("C6H5CHO", "benzaldehyde", "O=Cc1ccccc1"),
+        ("C6H5CHO", "benzaldehyde", "O=Cc1ccccc1"),
         # ("C6H5COCH3", "acetophenone", "CC(=O)c1ccccc1"),
-        # ("C6H5OCH3", "anisole", "COc1ccccc1"),
-        # ("C6H5CH=CH2", "styrene", "C=Cc1ccccc1"),
-        # ("C6H5C≡CH", "phenylacetylene", "C#Cc1ccccc1"),
-        # ("C6H5CN", "benzonitrile", "N#Cc1ccccc1"),
+        ("C6H5OCH3", "anisole", "COc1ccccc1"),
+        ("C6H5CH=CH2", "styrene", "C=Cc1ccccc1"),
+        ("C6H5C≡CH", "phenylacetylene", "C#Cc1ccccc1"),
+        ("C6H5CN", "benzonitrile", "N#Cc1ccccc1"),
         ("C6H5COOH", "benzoic acid", "OC(=O)c1ccccc1"),
         # ("CH3C6H4OH", "p-cresol", "Cc1ccc(O)cc1"),
         ("C6H5C(CH3)3", "tert-butylbenzene", "CC(C)(C)c1ccccc1"),
         # ("(C6H5)2CH2", "diphenylmethane", "c1ccc(Cc2ccccc2)cc1"),
-        ("C6H4(OH)2", "catechol", "Oc1ccccc1O"),
+        # ("C6H4(OH)2", "catechol", "Oc1ccccc1O"),
         # ("O2NC6H4NH2", "4-nitroaniline", "Nc1ccc([N+]([O-])=O)cc1"),
         
-        # ("CHCl3", "chloroform", "ClC(Cl)Cl"),
-        # ("CCl4", "carbon tetrachloride", "ClC(Cl)(Cl)Cl"),
-        # ("CF3COOH", "trifluoroacetic acid", "OC(=O)C(F)(F)F"),
-        # ("BrCH2CH2Br", "1,2-dibromoethane", "BrCCBr"),
-        # ("(CH3)3CBr", "tert-butyl bromide", "CC(C)(C)Br"),
-        # ("ClCH2COOH", "chloroacetic acid", "OC(=O)CCl"),
-        # ("CHBr3", "bromoform", "BrC(Br)Br"),
-        # ("CF2Cl2", "dichlorodifluoromethane", "FC(F)(Cl)Cl"),
+        ("CHCl3", "chloroform", "ClC(Cl)Cl"),
+        ("CCl4", "carbon tetrachloride", "ClC(Cl)(Cl)Cl"),
+        ("CF3COOH", "trifluoroacetic acid", "OC(=O)C(F)(F)F"),
+        ("BrCH2CH2Br", "1,2-dibromoethane", "BrCCBr"),
+        ("(CH3)3CBr", "tert-butyl bromide", "CC(C)(C)Br"),
+        ("ClCH2COOH", "chloroacetic acid", "OC(=O)CCl"),
+        ("CHBr3", "bromoform", "BrC(Br)Br"),
+        ("CF2Cl2", "dichlorodifluoromethane", "FC(F)(Cl)Cl"),
         
-        # ("CH3CH(OH)COOH", "lactic acid", "CC(O)C(=O)O"),
-        # ("(CH3)3CCOOH", "pivalic acid", "CC(C)(C)C(=O)O"),
+        ("CH3CH(OH)COOH", "lactic acid", "CC(O)C(=O)O"),
+        ("(CH3)3CCOOH", "pivalic acid", "CC(C)(C)C(=O)O"),
         # ("CH3COOC2H5", "ethyl acetate", "CCOC(C)=O"),
-        # ("C6H5COOCH3", "methyl benzoate", "COC(=O)c1ccccc1"),
+        ("C6H5COOCH3", "methyl benzoate", "COC(=O)c1ccccc1"),
         # ("(CH3CO)2O", "acetic anhydride", "CC(=O)OC(C)=O"),
-        # ("CH3COCl", "acetyl chloride", "CC(=O)Cl"),
+        ("CH3COCl", "acetyl chloride", "CC(=O)Cl"),
         # ("CH3CONH2", "acetamide", "CC(N)=O"),
         # ("C6H5CONH2", "benzamide", "NC(=O)c1ccccc1"),
-        # ("HOOCCH2CH2COOH", "succinic acid", "OC(=O)CCC(=O)O"),
+        ("HOOCCH2CH2COOH", "succinic acid", "OC(=O)CCC(=O)O"),
         # ("HOOC(CH2)4COOH", "adipic acid", "OC(=O)CCCCC(=O)O"),
         
         # ("(C2H5)3N", "triethylamine", "CCN(CC)CC"),
-        # ("(CH3)2NCHO", "N,N-dimethylformamide", "CN(C)C=O"),
-        # ("HOCH2CH2NH2", "ethanolamine", "NCCO"),
+        ("(CH3)2NCHO", "N,N-dimethylformamide", "CN(C)C=O"),
+        ("HOCH2CH2NH2", "ethanolamine", "NCCO"),
         # ("H2NCH2CH2NH2", "ethylenediamine", "NCCN"),
         # ("(HOCH2CH2)3N", "triethanolamine", "OCCN(CCO)CCO"),
-        # ("CH2=CHCN", "acrylonitrile", "C=CC#N"),
-        # ("(CH3)2NNH2", "1,1-dimethylhydrazine", "CN(C)N"),
-        # ("C6H5NHNH2", "phenylhydrazine", "NNc1ccccc1"),
-        # ("(CH3)2NCH2CH2N(CH3)2", "TMEDA", "CN(C)CCN(C)C"),
+        ("CH2=CHCN", "acrylonitrile", "C=CC#N"),
+        ("(CH3)2NNH2", "1,1-dimethylhydrazine", "CN(C)N"),
+        ("C6H5NHNH2", "phenylhydrazine", "NNc1ccccc1"),
+        ("(CH3)2NCH2CH2N(CH3)2", "TMEDA", "CN(C)CCN(C)C"),
         
-        # ("(CH3)2SO", "dimethyl sulfoxide", "CS(C)=O"),
+        ("(CH3)2SO", "dimethyl sulfoxide", "CS(C)=O"),
         # ("(CH3)2SO2", "dimethyl sulfone", "CS(C)(=O)=O"),
-        # ("CH3SH", "methanethiol", "CS"),
-        # ("CH3SSCH3", "dimethyl disulfide", "CSSC"),
-        # ("C6H5SH", "thiophenol", "Sc1ccccc1"),
-        # ("CH3SCH2CH2OH", "2-(methylthio)ethanol", "CSCCO"),
+        ("CH3SH", "methanethiol", "CS"),
+        ("CH3SSCH3", "dimethyl disulfide", "CSSC"),
+        ("C6H5SH", "thiophenol", "Sc1ccccc1"),
+        ("CH3SCH2CH2OH", "2-(methylthio)ethanol", "CSCCO"),
         # ("(C2H5)2S", "diethyl sulfide", "CCSCC"),
         
-        # ("C5H5N", "pyridine", "c1ccncc1"),
-        # ("C4H4O", "furan", "c1ccoc1"),
-        # ("C4H4S", "thiophene", "c1ccsc1"),
-        # ("C4H5N", "pyrrole", "c1cc[nH]c1"),
-        # ("C4H8O", "tetrahydrofuran", "C1CCOC1"),
-        # ("C3H4N2", "imidazole", "c1c[nH]cn1"),
-        # ("C3H4N2", "pyrazole", "c1cc[nH]n1"),
-        # ("C2H4O2S", "1,3-oxathiolane", "C1OCSO1"),
-        # ("C3H6OS", "1,3-oxathiane", "C1COCSC1"),
-        
-        # ("C4H8O2", "1,4-dioxane", "C1COCCO1"),
-        # ("C5H10O", "tetrahydropyran", "C1CCOCC1"),
-        # ("C5H11N", "piperidine", "C1CCNCC1"),
-        # ("C4H10N2", "piperazine", "C1CNCCN1"),
-        # ("C4H9NO", "morpholine", "C1COCCN1"),
-        # ("C4H4N2", "pyrimidine", "c1cncnc1"),
-        # ("C4H4N2", "pyrazine", "c1cnccn1"),
-        # ("C5H4N4", "purine", "c1ncc2[nH]cnc2n1"),
-        
-        # ("C8H7N", "indole", "c1ccc2[nH]ccc2c1"),
-        # ("C9H7N", "quinoline", "c1ccc2ncccc2c1"),
-        # ("C9H7N", "isoquinoline", "c1ccc2cnccc2c1"),
-        # ("C10H8", "naphthalene", "c1ccc2ccccc2c1"),
-        # ("C14H10", "anthracene", "c1ccc2cc3ccccc3cc2c1"),
-        # ("C14H10", "phenanthrene", "c1ccc2c(c1)ccc1ccccc12"),
-        # ("C12H8N2", "1,10-phenanthroline", "c1cnc2c(c1)ccc1cccnc12"),
-        # ("C8H6O", "benzofuran", "c1ccc2occc2c1"),
-        # ("C8H6S", "benzothiophene", "c1ccc2sccc2c1"),
-        # ("C7H5NO", "benzoxazole", "c1ccc2ocnc2c1"),
-        # ("C7H5NS", "benzothiazole", "c1ccc2scnc2c1"),
-        
-        # ("C10H18", "decalin", "C1CCC2CCCCC2C1"),
-        # ("C7H12", "norbornane", "C1CC2CCC1C2"),
-        # ("C10H16", "adamantane", "C1C2CC3CC1CC(C2)C3"),
-        # ("C8H14", "bicyclo[2.2.2]octane", "C1CC2CCC1CC2"),
-        # ("C6H12O", "cyclohexanol", "OC1CCCCC1"),
-        # ("C6H10O", "cyclohexanone", "O=C1CCCCC1"),
-        # ("C7H12O", "cycloheptanone", "O=C1CCCCCC1"),
-        
-        # ("(CH3)4Si", "tetramethylsilane", "C[Si](C)(C)C"),
-        # ("(CH3)3SiCl", "trimethylsilyl chloride", "C[Si](C)(C)Cl"),
-        # ("(CH3)3SiOSi(CH3)3", "hexamethyldisiloxane", "C[Si](C)(C)O[Si](C)(C)C"),
+        ("(CH3)4Si", "tetramethylsilane", "C[Si](C)(C)C"),
+        ("(CH3)3SiCl", "trimethylsilyl chloride", "C[Si](C)(C)Cl"),
+        ("(CH3)3SiOSi(CH3)3", "hexamethyldisiloxane", "C[Si](C)(C)O[Si](C)(C)C"),
         # ("(C2H5O)4Si", "tetraethyl orthosilicate", "CCO[Si](OCC)(OCC)OCC"),
-        # ("C6H5Si(CH3)3", "trimethylphenylsilane", "C[Si](C)(C)c1ccccc1"),
+        ("C6H5Si(CH3)3", "trimethylphenylsilane", "C[Si](C)(C)c1ccccc1"),
         
         # ("(CH3O)3PO", "trimethyl phosphate", "COP(=O)(OC)OC"),
         # ("(C2H5O)3PO", "triethyl phosphate", "CCOP(=O)(OCC)OCC"),
         # ("(C6H5)3P", "triphenylphosphine", "c1ccc(P(c2ccccc2)c2ccccc2)cc1"),
         # ("(C6H5)3PO", "triphenylphosphine oxide", "O=P(c1ccccc1)(c1ccccc1)c1ccccc1"),
         
-        # ("B(OH)3", "boric acid", "OB(O)O"),
-        # ("C6H5B(OH)2", "phenylboronic acid", "OB(O)c1ccccc1"),
+        ("B(OH)3", "boric acid", "OB(O)O"),
+        ("C6H5B(OH)2", "phenylboronic acid", "OB(O)c1ccccc1"),
         # ("(CH3O)3B", "trimethyl borate", "COB(OC)OC"),
         
-        # ("(CH3)2CHCHO", "isobutyraldehyde", "CC(C)C=O"),
+        ("(CH3)2CHCHO", "isobutyraldehyde", "CC(C)C=O"),
         # ("(CH3)2CHCOCH3", "3-methyl-2-butanone", "CC(C)C(C)=O"),
         # ("CH3COCH2COCH3", "acetylacetone", "CC(=O)CC(C)=O"),
         # ("CH3COCH2CH(CH3)2", "4-methyl-2-pentanone", "CC(C)CC(C)=O"),
@@ -1593,25 +1605,25 @@ def run_tests():
         # ("C6H5COC6H5", "benzophenone", "O=C(c1ccccc1)c1ccccc1"),
         # ("(CH3)2C=CHCOCH3", "mesityl oxide", "CC(C)=CC(C)=O"),
         
-        # ("CH2=CHCH2OH", "allyl alcohol", "OCC=C"),
-        # ("CH3C≡CH", "propyne", "CC#C"),
-        # ("CH2=C(CH3)COOCH3", "methyl methacrylate", "COC(=O)C(C)=C"),
-        # ("CH2=CHCOOH", "acrylic acid", "OC(=O)C=C"),
-        # ("CH2=CHCOOCH3", "methyl acrylate", "COC(=O)C=C"),
-        # ("(CH3)2C=C(CH3)2", "2,3-dimethyl-2-butene", "CC(C)=C(C)C"),
-        # ("CH2=CHCH=CH2", "1,3-butadiene", "C=CC=C"),
+        ("CH2=CHCH2OH", "allyl alcohol", "OCC=C"),
+        ("CH3C≡CH", "propyne", "CC#C"),
+        ("CH2=C(CH3)COOCH3", "methyl methacrylate", "COC(=O)C(C)=C"),
+        ("CH2=CHCOOH", "acrylic acid", "OC(=O)C=C"),
+        ("CH2=CHCOOCH3", "methyl acrylate", "COC(=O)C=C"),
+        ("(CH3)2C=C(CH3)2", "2,3-dimethyl-2-butene", "CC(C)=C(C)C"),
+        ("CH2=CHCH=CH2", "1,3-butadiene", "C=CC=C"),
         
         # ("H2NCH2COOH", "glycine", "NCC(=O)O"),
-        # ("CH3CH(NH2)COOH", "alanine", "CC(N)C(=O)O"),
-        # ("C6H5CH2CH(NH2)COOH", "phenylalanine", "NC(Cc1ccccc1)C(=O)O"),
+        ("CH3CH(NH2)COOH", "alanine", "CC(N)C(=O)O"),
+        ("C6H5CH2CH(NH2)COOH", "phenylalanine", "NC(Cc1ccccc1)C(=O)O"),
         # ("HSCH2CH(NH2)COOH", "cysteine", "NC(CS)C(=O)O"),
-        # ("(CH3)2CHCH(NH2)COOH", "valine", "CC(C)C(N)C(=O)O"),
+        ("(CH3)2CHCH(NH2)COOH", "valine", "CC(C)C(N)C(=O)O"),
         
-        # ("HOCH2CH2OCH2CH2OH", "diethylene glycol", "OCCOCCO"),
-        # ("CH3OCH2CH2OCH2CH2OCH3", "diglyme", "COCCOCCOC"),
-        # ("C6H5CH(OH)CH3", "1-phenylethanol", "CC(O)c1ccccc1"),
-        # ("(CH3)2C(OH)C≡CH", "2-methyl-3-butyn-2-ol", "CC(C)(O)C#C"),
-        # ("NCCH2CH2CN", "succinonitrile", "N#CCCC#N"),
+        ("HOCH2CH2OCH2CH2OH", "diethylene glycol", "OCCOCCO"),
+        ("CH3OCH2CH2OCH2CH2OCH3", "diglyme", "COCCOCCOC"),
+        ("C6H5CH(OH)CH3", "1-phenylethanol", "CC(O)c1ccccc1"),
+        ("(CH3)2C(OH)C≡CH", "2-methyl-3-butyn-2-ol", "CC(C)(O)C#C"),
+        ("NCCH2CH2CN", "succinonitrile", "N#CCCC#N"),
         # ("CH3COCH2CH2COCH3", "acetonylacetone", "CC(=O)CCC(C)=O"),
         # ("HOCH2C(CH2OH)3", "pentaerythritol", "OCC(CO)(CO)CO"),
     ]
