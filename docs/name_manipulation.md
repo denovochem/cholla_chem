@@ -1,0 +1,3 @@
+## Name Correction/Editing
+
+Feature in progress - intended to allow for small spelling/OCR error correction.

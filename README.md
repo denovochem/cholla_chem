@@ -2,7 +2,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.python.org/pypi/PubChemPy)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/name_to_smiles/blob/main/LICENSE)
 [![Tests](https://img.shields.io/github/actions/workflow/status/mcs07/pubchempy/test.yml?logo=github&logoColor=%23ffffff&label=tests)](https://github.com/mcs07/PubChemPy/actions/workflows/test.yml)
-[![Docs](https://img.shields.io/readthedocs/pubchempy?logo=readthedocs&logoColor=%23ffffff)](https://docs.pubchempy.org)
+[![Docs](https://img.shields.io/readthedocs/pubchempy?logo=readthedocs&logoColor=%23ffffff)](https://denovochem.github.io/name_to_smiles/)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
@@ -23,7 +23,6 @@ Install placeholder_name with pip directly from this repo:
 
 ```shell
 pip install git+https://github.com/denovochem/name_to_smiles.git
-
 ```
 
 ## Basic usage

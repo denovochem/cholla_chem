@@ -1,17 +1,24 @@
-# Welcome to MkDocs
+# placeholder_name documentation
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+## Quick Start
 
-## Commands
+Install placeholder_name with pip directly from the github repo:
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+```shell
+pip install git+https://github.com/denovochem/name_to_smiles.git
 
-## Project layout
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Basic usage
+Resolve chemical names to SMILES by passing a string or a list of strings:
+```pycon
+from placeholder_name import resolve_compounds_to_smiles
+resolved_smiles = resolve_compounds_to_smiles(['MeOH.benzene'])
+''
+```
+See detailed information including which resolver returned which SMILES with detailed_name_dict=True:
+```pycon
+from placeholder_name import resolve_compounds_to_smiles
+resolved_smiles = resolve_compounds_to_smiles(['MeOH.benzene'], detailed_name_dict=True)
+''
+```

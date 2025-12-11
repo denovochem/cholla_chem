@@ -1,5 +1,5 @@
-site_name: Your Project Name
-site_description: A brief description of your project
+site_name: placeholder_name
+site_description: Convert chemical names to SMILES
 repo_url: https://github.com/denovochem/name_to_smiles
 repo_name: denovochem/name_to_smiles
 
@@ -25,6 +25,11 @@ plugins:
 
 nav:
   - Home: index.md
+  - Installation: installation.md
+  - Getting Started: getting_started.md
+  - Resolvers: resolvers.md
+  - Smiles Selection: smiles_selection.md
+  - Name Correction/Editing: name_manipulation.md
   - API Reference: reference.md
 
 markdown_extensions:

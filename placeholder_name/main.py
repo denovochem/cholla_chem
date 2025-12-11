@@ -390,6 +390,7 @@ def assemble_split_compounds_resolution_dict(
 def select_smiles_with_criteria(
     compounds_out_dict: Dict[str, Dict[str, str]],
     resolvers_weight_dict: Dict[str, float],
+    resolvers_priority_order: List[str],
     smiles_selection_mode: str,
 ) -> None:
     """
@@ -398,12 +399,13 @@ def select_smiles_with_criteria(
     Args:
         compounds_out_dict (Dict[str, Dict[str, str]]): Dictionary of compound names to their resolved SMILES representations.
         resolvers_weight_dict (Dict[str, float]): Dictionary of resolver names to their weights.
+        resolvers_priority_order (List[str]): List of priority order for resolvers 
         smiles_selection_mode (str): The method to select the SMILES representation from multiple resolvers.
 
     Returns:
         XXX
     """
-    selector = SMILESSelector(compounds_out_dict, resolvers_weight_dict)
+    selector = SMILESSelector(compounds_out_dict, resolvers_weight_dict, resolvers_priority_order)
     for k,v in compounds_out_dict.items():
         selected_smiles, selected_smiles_resolvers = selector.select_smiles(k, smiles_selection_mode)
         v['SMILES'] = selected_smiles
@@ -507,9 +509,10 @@ def resolve_compounds_to_smiles(
 
     # Get the resolvers weight dict - needed for SMILESSelector
     resolvers_weight_dict = get_resolvers_weight_dict(resolvers_list)
+    resolvers_priority_order = [resolver.resolver_name for resolver in resolvers_list]
 
     # Select "best" SMILES according to some criteria, add to resolution dict
-    compounds_out_dict = select_smiles_with_criteria(compounds_out_dict, resolvers_weight_dict, smiles_selection_mode)
+    compounds_out_dict = select_smiles_with_criteria(compounds_out_dict, resolvers_weight_dict, resolvers_priority_order, smiles_selection_mode)
 
     if not detailed_name_dict:
         return {k:v.get('SMILES', '') for k, v in compounds_out_dict.items()}
