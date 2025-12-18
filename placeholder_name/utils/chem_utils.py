@@ -2,7 +2,7 @@ from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from placeholder_name.utils.logging_config import logger
 
-enumerator = rdMolStandardize.TautomerEnumerator()
+tautomer_enumerator = rdMolStandardize.TautomerEnumerator()
 
 
 def canonicalize_smiles(
@@ -35,7 +35,7 @@ def canonicalize_smiles(
         for i in x:
             m = Chem.MolFromSmiles(i)
             if canonicalize_tautomer:
-                m = enumerator.Canonicalize(m)
+                m = tautomer_enumerator.Canonicalize(m)
             if remove_mapping:
                 [a.SetAtomMapNum(0) for a in m.GetAtoms()]
             canonical_smiles_string = str(

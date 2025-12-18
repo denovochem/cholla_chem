@@ -2004,7 +2004,3 @@ Examples:
                         f"   - {correction.correction_type.name}: "
                         f"'{correction.original}' → '{correction.replacement}'"
                     )
-
-
-if __name__ == "__main__":
-    main()

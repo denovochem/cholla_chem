@@ -1,4 +1,4 @@
-placeholder_name uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
+placeholder_name uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
 
 - PubChemNameResolver('pubchem_default', resolver_weight=2),
 - OpsinNameResolver('opsin_default', resolver_weight=3),

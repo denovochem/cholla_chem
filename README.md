@@ -14,7 +14,7 @@ This library can use the following existing name-to-SMILES resolvers:
 
 
 This library also implements the following new resolvers:
-- Manually curated dataset of common names not resolved by other resolvers
+- Manually curated dataset of common names not correctly resolved by other resolvers (e.g. NaH)
 - Structural formula resolver (e.g. 'CH3CH2CH2COOH')
 - Peptide shorthand resolver (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)')
 

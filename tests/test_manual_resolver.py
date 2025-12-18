@@ -7,7 +7,6 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from placeholder_name.resolvers.manual_resolver import (  # noqa: E402
-    load_default_manual_name_dict,
     process_name_dict,
     name_to_smiles_manual,
 )
