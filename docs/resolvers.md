@@ -3,7 +3,6 @@ placeholder_name uses a variety of resolvers to convert chemical names to SMILES
 - PubChemNameResolver('pubchem_default', resolver_weight=2),
 - OpsinNameResolver('opsin_default', resolver_weight=3),
 - ManualNameResolver('manual_default', resolver_weight=10),
-- PeptideNameResolver('peptide_default', resolver_weight=3),
 - StructuralFormulaNameResolver('structural_formula_default', resolver_weight=2)
 
 ## Passing Resolvers to resolve_compounds_to_smiles:
@@ -47,7 +46,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 ```
 
 ## OpsinNameResolver
-This resolver uses a fork of the [py2opsin](https://github.com/csnbritt/py2opsin) library that returns the error message from OPSIN if a name cannot be resolved. This resolver can be configured with the following arguments:
+This resolver uses a fork of the [py2opsin](https://github.com/denovochem/py2opsin) library that returns the error message from OPSIN if a name cannot be resolved. This resolver can be configured with the following arguments:
 
 Arguments:
 
@@ -77,7 +76,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 ```
 
 ## PubChemNameResolver
-This resolver uses a fork of the [PubChemPy](https://github.com/csnbritt/PubChemPy) library which implements batching with the Power User Gateway XML schema to significantly speedup SMILES resolutions.
+This resolver uses a fork of the [PubChemPy](https://github.com/denovochem/PubChemPy) library which implements batching with the Power User Gateway XML schema to significantly speedup SMILES resolutions.
 
 Default weight for 'weighted' SMILES selection method: 2
 
@@ -157,25 +156,6 @@ manual_resolver = ManualNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(['Foobar'], [manual_resolver])
-```
-
-## PeptideNameResolver
-This resolver converts shorthand peptide names (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)') to an IUPAC-like name, then attempts to resolve to SMILES with py2opsin.
-
-Default weight for 'weighted' SMILES selection method: 3
-
-```
-from placeholder_name import PeptideNameResolver
-
-peptide_shorthand_resolver = PeptideNameResolver(
-    resolver_name='peptide', 
-    resolver_weight=3
-)
-
-resolved_smiles = resolve_compounds_to_smiles(
-    ['cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)'], 
-    [peptide_shorthand_resolver]
-)
 ```
 
 ## StructuralFormulaNameResolver

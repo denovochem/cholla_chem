@@ -108,9 +108,13 @@ ENV/
 
 # test file
 testing.py
+testing.ipynb
 
 # todo list:
 todo.txt
 
 # name_correction.py for now
 /placeholder_name/name_manipulation/name_correction.py
+
+# vscode settings
+.vscode/

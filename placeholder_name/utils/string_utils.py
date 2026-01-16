@@ -1,10 +1,13 @@
+import re
+from typing import List, Dict
+
 from placeholder_name.utils.constants import (
     COMMON_CHARS_WHITELIST,
     NON_LATIN1_REPLACEMENTS,
 )
 
 
-def safe_str(x):
+def safe_str(x: object) -> str | None:
     """Tries to convert to string, returns none upon exception"""
     try:
         return str(x)
@@ -12,7 +15,9 @@ def safe_str(x):
         return None
 
 
-def filter_strings_by_whitelist(strings, whitelist=COMMON_CHARS_WHITELIST):
+def filter_strings_by_whitelist(
+    strings: List[str], whitelist: List[str] = COMMON_CHARS_WHITELIST
+) -> List[str]:
     """
     Filters a list of strings, returning only those that contain
     only characters from the whitelist.
@@ -25,7 +30,9 @@ def filter_strings_by_whitelist(strings, whitelist=COMMON_CHARS_WHITELIST):
     return [s for s in strings if set(s).issubset(whitelist_set)]
 
 
-def clean_strings(string, chars_to_replace_dict=NON_LATIN1_REPLACEMENTS):
+def clean_strings(
+    string: str, chars_to_replace_dict: Dict[str, str] = NON_LATIN1_REPLACEMENTS
+) -> str:
     """
     Removes specified characters from a string.
 
@@ -39,10 +46,11 @@ def clean_strings(string, chars_to_replace_dict=NON_LATIN1_REPLACEMENTS):
     for char, replacement in chars_to_replace_dict.items():
         string = string.replace(char, replacement)
     string = string.replace("\n", "")
+    string = remove_tags(string)
     return string
 
 
-def is_latin1_compatible(s):
+def is_latin1_compatible(s: str) -> bool:
     """Check if a string is compatible with the latin-1 codec."""
     try:
         s.encode("latin-1")
@@ -51,6 +59,12 @@ def is_latin1_compatible(s):
         return False
 
 
-def filter_latin1_compatible(strings):
+def filter_latin1_compatible(strings: List[str]) -> List[str]:
     """Filter a list of strings to only include those compatible with the latin-1 codec."""
     return [s for s in strings if is_latin1_compatible(s)]
+
+
+def remove_tags(string: str) -> str:
+    """Remove HTML tags from a string."""
+    pattern = r"<.*?>"
+    return re.sub(pattern, "", string)

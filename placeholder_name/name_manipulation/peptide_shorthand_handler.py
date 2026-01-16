@@ -1,6 +1,5 @@
-from typing import Dict, List, Tuple
+from typing import List
 
-from placeholder_name.resolvers.opsin_resolver import name_to_smiles_opsin
 from placeholder_name.utils.constants import (
     AA_FULL,
     # AMINO_ACID_SUB_SITES,
@@ -361,37 +360,3 @@ def looks_like_peptide_shorthand(potential_peptide: str) -> bool:
         if f"-{k}-" in potential_peptide.lower():
             return True
     return False
-
-
-def name_to_smiles_peptide(
-    compound_name_list: List[str],
-) -> Tuple[Dict[str, str], Dict[str, str]]:
-    """
-    Converts a list of peptide shorthand names to their corresponding SMILES strings by first
-    converting the shorthand to an IUPAC-like name, then resolving that with OPSIN.
-
-    Args:
-        compound_name_list (List[str]): A list of peptide shorthand names to be converted.
-
-    Returns:
-        Tuple[Dict[str, str], Dict[str, str]]: A tuple containing two dictionaries. The first dictionary maps each peptide shorthand name to its SMILES string, and the second dictionary maps each peptide shorthand name that failed conversion to its error message.
-    """
-    peptide_iupac_names = []
-    peptide_iupac_to_shorthand_mapping = {}
-    for compound_name in compound_name_list:
-        if not looks_like_peptide_shorthand(compound_name):
-            continue
-        peptide_iupac = peptide_shorthand_to_iupac(compound_name)
-        peptide_iupac_names.append(peptide_iupac)
-        peptide_iupac_to_shorthand_mapping[peptide_iupac] = compound_name
-
-    chemical_name_dict, failure_message_dict = name_to_smiles_opsin(peptide_iupac_names)
-    chemical_name_dict = {
-        peptide_iupac_to_shorthand_mapping[k]: v for k, v in chemical_name_dict.items()
-    }
-    failure_message_dict = {
-        peptide_iupac_to_shorthand_mapping[k]: v
-        for k, v in failure_message_dict.items()
-    }
-
-    return chemical_name_dict, failure_message_dict

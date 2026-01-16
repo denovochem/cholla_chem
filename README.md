@@ -8,8 +8,8 @@
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
 This library can use the following existing name-to-SMILES resolvers:
-- [py2opsin](https://github.com/csnbritt/py2opsin)
-- [PubChemPy](https://github.com/csnbritt/PubChemPy)
+- [py2opsin](https://github.com/denovochem/py2opsin)
+- [PubChemPy](https://github.com/denovochem/PubChemPy)
 - [CIRpy](https://github.com/mcs07/CIRpy)
 - [ChemSpiPy](https://github.com/mcs07/ChemSpiPy)
 
@@ -17,11 +17,12 @@ This library can use the following existing name-to-SMILES resolvers:
 This library also implements the following new resolvers:
 - Manually curated dataset of common names not correctly resolved by other resolvers (e.g. NaH)
 - Structural formula resolver (e.g. 'CH3CH2CH2COOH')
-- Peptide shorthand resolver (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)')
 
 
 The following string editing/manipulation strategies may be applied to compounds to assist with name-to-SMILES resolution:
 - Splitting compounds on common delimiters (useful for mixtures of compounds, e.g. 'BH3•THF')
+- Peptide shorthand expansion (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)' -> 'XXX')
+- Name correction for OCR errors, typos, pagination errors, etc. 
 
 
 When resolvers disagree on the SMILES for a given compound, a variety of SMILES selection methods can be employed to determine the "best" SMILES for a given compound name. See the documentation for more details.

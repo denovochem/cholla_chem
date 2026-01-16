@@ -6,11 +6,12 @@ from .main import (
     ChemicalNameResolver,
     ManualNameResolver,
     OpsinNameResolver,
-    PeptideNameResolver,
     PubChemNameResolver,
     StructuralFormulaNameResolver,
     resolve_compounds_to_smiles,
 )
+
+from .name_manipulation.name_correction.name_corrector import ChemNameCorrector
 
 __all__ = [
     "resolve_compounds_to_smiles",
@@ -19,9 +20,9 @@ __all__ = [
     "ManualNameResolver",
     "OpsinNameResolver",
     "PubChemNameResolver",
-    "PeptideNameResolver",
     "StructuralFormulaNameResolver",
     "CIRpyNameResolver",
+    "ChemNameCorrector",
 ]
 
 __version__ = "0.0.1"

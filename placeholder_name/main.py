@@ -1,6 +1,7 @@
-import warnings
 from abc import ABC, abstractmethod
+import shutil
 from typing import Dict, List, Tuple
+import warnings
 
 from rdkit import RDLogger
 
@@ -8,11 +9,13 @@ from placeholder_name.name_manipulation.split_names import (
     get_delimiter_split_dict,
     resolve_delimiter_split_dict,
 )
+from placeholder_name.name_manipulation.unicode_normalization import (
+    normalize_unicode_and_return_mapping,
+)
 from placeholder_name.resolvers.chemspipy_resolver import name_to_smiles_chemspipy
 from placeholder_name.resolvers.cirpy_resolver import name_to_smiles_cirpy
 from placeholder_name.resolvers.manual_resolver import name_to_smiles_manual
 from placeholder_name.resolvers.opsin_resolver import name_to_smiles_opsin
-from placeholder_name.resolvers.peptide_resolver import name_to_smiles_peptide
 from placeholder_name.resolvers.pubchem_resolver import name_to_smiles_pubchem
 from placeholder_name.resolvers.structural_formula_resolver import (
     name_to_smiles_structural_formula,
@@ -20,7 +23,6 @@ from placeholder_name.resolvers.structural_formula_resolver import (
 from placeholder_name.smiles_selector import SMILESSelector
 from placeholder_name.utils.chem_utils import canonicalize_smiles
 from placeholder_name.utils.logging_config import configure_logging, logger
-from placeholder_name.utils.string_utils import clean_strings
 
 # Configure loguru logging
 configure_logging(level="WARNING")
@@ -223,27 +225,6 @@ class ManualNameResolver(ChemicalNameResolver):
         return resolved_names, {}
 
 
-class PeptideNameResolver(ChemicalNameResolver):
-    """
-    Resolver using peptide shorthand-to-IUPAC-like name, then resolved to SMILES
-    with OPSIN via py2opsin.
-    """
-
-    def __init__(self, resolver_name: str, resolver_weight: float = 3):
-        super().__init__("peptide", resolver_name, resolver_weight)
-
-    def name_to_smiles(
-        self, compound_name_list: List[str]
-    ) -> Tuple[Dict[str, str], Dict[str, str]]:
-        """
-        Convert chemical names to SMILES using peptide name converter and OPSIN.
-        """
-        resolved_names, failure_message_dict = name_to_smiles_peptide(
-            compound_name_list
-        )
-        return resolved_names, failure_message_dict
-
-
 class StructuralFormulaNameResolver(ChemicalNameResolver):
     """
     Resolver using structural chemical formula (e.g. CH3CH2CH2COOH).
@@ -262,23 +243,37 @@ class StructuralFormulaNameResolver(ChemicalNameResolver):
         return resolved_names, {}
 
 
-def clean_strings_and_return_mapping(
-    compounds_list: List[str],
-) -> Tuple[List[str], Dict[str, str]]:
+def java_available() -> bool:
     """
-    Clean a list of strings by replacing certain characters and return a mapping from the original strings to their cleaned versions.
-
-    Args:
-        compounds_list (List[str]): A list of strings to clean.
+    Check if the Java executable is available on the system's PATH.
 
     Returns:
-        Tuple[List[str], Dict[str, str]]: A tuple containing the list of cleaned strings and a dictionary mapping the original strings to their cleaned versions.
+        bool: True if the Java executable is available, False otherwise.
     """
-    cleaned_compounds_list = [clean_strings(ele) for ele in compounds_list]
-    cleaned_compounds_dict = {
-        k: v for k, v in zip(compounds_list, cleaned_compounds_list)
-    }
-    return cleaned_compounds_list, cleaned_compounds_dict
+    return shutil.which("java") is not None
+
+
+def remove_opsin_if_no_java(
+    resolvers_list: List["ChemicalNameResolver"],
+) -> List["ChemicalNameResolver"]:
+    """
+    Remove any OPSIN resolvers from the list if Java is not available.
+
+    This is because OPSIN requires Java to run, so we can't use it if Java is not available.
+
+    Args:
+        resolvers_list (List[ChemicalNameResolver]): A list of resolvers.
+
+    Returns:
+        List[ChemicalNameResolver]: The list of resolvers with any OPSIN resolvers removed if Java is not available.
+    """
+    has_opsin = any(isinstance(r, OpsinNameResolver) for r in resolvers_list)
+    if has_opsin and not java_available():
+        logger.info("Java not found, removing OPSIN resolver")
+        resolvers_list = [
+            r for r in resolvers_list if not isinstance(r, OpsinNameResolver)
+        ]
+    return resolvers_list
 
 
 def get_resolvers_weight_dict(
@@ -555,7 +550,6 @@ def resolve_compounds_to_smiles(
             PubChemNameResolver("pubchem_default"),
             OpsinNameResolver("opsin_default"),
             ManualNameResolver("manual_default"),
-            PeptideNameResolver("peptide_default"),
             StructuralFormulaNameResolver("structural_formula_default"),
         ]
 
@@ -611,8 +605,8 @@ def resolve_compounds_to_smiles(
         raise ValueError("Invalid input: split_names_to_solve must be a bool.")
 
     # Clean compound names (strip, remove/replace forbidden characters, etc.) and return a mapping dict
-    cleaned_compounds_list, cleaned_compounds_dict = clean_strings_and_return_mapping(
-        compounds_list
+    cleaned_compounds_list, cleaned_compounds_dict = (
+        normalize_unicode_and_return_mapping(compounds_list)
     )
 
     if split_names_to_solve:
