@@ -226,3 +226,23 @@ class SMILESSelector:
         ]
         smiles = min(top_candidates)
         return smiles, smiles_dict.get(smiles, [""])
+
+    def _strategy_highest_symmetry_smiles(
+        self, smiles_dict: Dict[str, List[str]], **kwargs
+    ) -> tuple[str, List[str]]:
+        """
+        Pick the SMILES with the highest symmetry
+        """
+        scores: DefaultDict[str, float] = defaultdict(float)
+        for smiles, _ in smiles_dict.items():
+            mol = Chem.MolFromSmiles(smiles)
+            mol = Chem.AddHs(mol)
+            Chem.RemoveStereochemistry(mol)
+            groups = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+            scores[smiles] = len(set(groups))
+        min_score = min(scores.values())
+        top_candidates = [
+            smiles for smiles, score in scores.items() if score == min_score
+        ]
+        smiles = min(top_candidates)
+        return smiles, smiles_dict.get(smiles, [""])

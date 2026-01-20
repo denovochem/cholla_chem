@@ -1,5 +1,6 @@
 import re
 from typing import List, Dict
+from placeholder_name.utils.logging_config import logger
 
 from placeholder_name.utils.constants import (
     COMMON_CHARS_WHITELIST,
@@ -56,6 +57,7 @@ def is_latin1_compatible(s: str) -> bool:
         s.encode("latin-1")
         return True
     except UnicodeEncodeError:
+        logger.info(f"String {s} is not compatible with latin-1 codec")
         return False
 
 

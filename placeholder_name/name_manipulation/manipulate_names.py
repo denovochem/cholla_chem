@@ -1,7 +1,10 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from placeholder_name.name_manipulation.name_correction.name_corrector import (
     ChemNameCorrector,
+)
+from placeholder_name.name_manipulation.name_correction.dataclasses import (
+    CorrectorConfig,
 )
 from placeholder_name.name_manipulation.peptide_shorthand_handler import (
     peptide_shorthand_to_iupac,
@@ -12,32 +15,63 @@ from placeholder_name.name_manipulation.peptide_shorthand_handler import (
 corrector = ChemNameCorrector()
 
 
-def correct_names(names_to_correct: list[str]) -> dict[str, Dict[str, List[str]]]:
+def correct_names(
+    compounds_out_dict: Dict[str, Dict[str, Dict[str, List[str]]]],
+    name_correction_config: Optional[CorrectorConfig] = None,
+    resolve_peptide_shorthand: Optional[bool] = False,
+) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
     """
-    Corrects a list of chemical names using OCR and Typo correction strategies.
+    Correct chemical names using ChemNameCorrector and optionally resolve peptide shorthand.
 
     Args:
-        names_to_correct (list[str]): List of chemical names to correct
+        compounds_out_dict: Dictionary mapping compound names to their resolution data
+        name_correction_config: Configuration for name correction (e.g., allow_acid, allow_radicals)
+        resolve_peptide_shorthand: Whether to attempt peptide shorthand expansion
 
     Returns:
-        dict[str, Dict[str,List[str]]]: A dictionary mapping each original name to its expanded and/or corrected names. The value is a dictionary with keys "expanded" and/or "corrected", and values being dictionaries with the expanded/corrected name as key and a list of operations used to derive it as value.
+        Dictionary mapping original names to their correction information
     """
-    original_name_corrected_name_dict: dict[str, Dict[str, List[str]]] = {}
-    if not names_to_correct:
-        return original_name_corrected_name_dict
-    for name_to_correct in names_to_correct:
-        if looks_like_peptide_shorthand(name_to_correct):
-            if name_to_correct not in original_name_corrected_name_dict:
-                original_name_corrected_name_dict[name_to_correct] = {
-                    peptide_shorthand_to_iupac(name_to_correct): [
-                        "peptide_shorthand_expansion"
-                    ]
-                }
+    if not name_correction_config:
+        corrector = ChemNameCorrector(config=name_correction_config)
 
-        if corrector.correct(name_to_correct) is not None:
-            if name_to_correct not in original_name_corrected_name_dict:
-                original_name_corrected_name_dict[name_to_correct] = {
-                    corrector.correct(name_to_correct): ["name_correction"]
-                }
+    all_compound_correction_dict = {}
+    names_to_correct = []
+    for k, v in compounds_out_dict.items():
+        v["name_correction_info"] = {}
+        if not v.get("SMILES", ""):
+            names_to_correct.append(k)
 
-    return original_name_corrected_name_dict
+    corrected_names = corrector.correct_batch(names_to_correct)
+    for name, correction_candidates in corrected_names.items():
+        if name not in compounds_out_dict:
+            continue
+        compound_correction_dict = {}
+
+        if resolve_peptide_shorthand and looks_like_peptide_shorthand(name):
+            try:
+                iupac_name = peptide_shorthand_to_iupac(name)
+                compound_correction_dict["top_5"] = []
+                compound_correction_dict["SMILES"] = ""
+                compound_correction_dict["selected_name"] = iupac_name
+                compound_correction_dict["name_manipulation_method"] = (
+                    "peptide_shorthand_expansion"
+                )
+            except Exception:
+                pass
+
+            all_compound_correction_dict[name] = compound_correction_dict
+            continue
+
+        compound_correction_dict["top_5"] = [
+            [candidate.name, candidate.score] for candidate in correction_candidates[:5]
+        ]
+        for candidate in correction_candidates:
+            if candidate.validation_result:
+                resolved_smiles = candidate.validation_result
+                compound_correction_dict["SMILES"] = resolved_smiles
+                compound_correction_dict["selected_name"] = candidate.name
+                compound_correction_dict["name_manipulation_method"] = "name_correction"
+                break
+        all_compound_correction_dict[name] = compound_correction_dict
+
+    return all_compound_correction_dict

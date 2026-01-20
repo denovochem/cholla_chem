@@ -5,8 +5,8 @@ import warnings
 
 from rdkit import RDLogger
 
-from placeholder_name.name_manipulation.name_correction.name_corrector import (
-    ChemNameCorrector,
+from placeholder_name.name_manipulation.manipulate_names import (
+    correct_names,
 )
 from placeholder_name.name_manipulation.split_names import (
     get_delimiter_split_dict,
@@ -26,8 +26,6 @@ from placeholder_name.resolvers.structural_formula_resolver import (
 from placeholder_name.smiles_selector import SMILESSelector
 from placeholder_name.utils.chem_utils import canonicalize_smiles
 from placeholder_name.utils.logging_config import configure_logging, logger
-
-corrector = ChemNameCorrector()
 
 # Configure loguru logging
 configure_logging(level="WARNING")
@@ -670,31 +668,31 @@ def resolve_compounds_to_smiles(
         smiles_selection_mode,
     )
 
-    if name_correction_config:
-        # TODO: Implement name correction with config
-        pass
-
     if attempt_name_correction:
-        names_to_correct = []
-        for k, v in compounds_out_dict.items():
-            v["name_correction_info"] = {}
-            if not v.get("SMILES", ""):
-                names_to_correct.append(k)
-        corrected_names = corrector.correct_batch(names_to_correct)
-        for name, correction_candidates in corrected_names.items():
-            if name not in compounds_out_dict:
-                continue
-            compound_correction_dict = {}
-            compound_correction_dict["top_5"] = [
-                candidate.name for candidate in correction_candidates[:5]
-            ]
-            print([candidate.score for candidate in correction_candidates[:5]])
-            for candidate in correction_candidates:
-                if candidate.validation_result:
-                    resolved_smiles = candidate.validation_result
-                    compounds_out_dict[name]["SMILES"] = resolved_smiles
-                    break
-            compounds_out_dict[name]["name_correction_info"] = compound_correction_dict
+        corrected_names_dict = correct_names(
+            compounds_out_dict, name_correction_config, resolve_peptide_shorthand
+        )
+        corrected_names_dict_list = [
+            ele["selected_name"] for ele in list(corrected_names_dict.values())
+        ]
+        corrected_names_original_names_mapping_dict = {
+            v["selected_name"]: k for k, v in list(corrected_names_dict.items())
+        }
+        corrected_compounds_out_dict = resolve_compounds_to_smiles(
+            compounds_list=corrected_names_dict_list,
+            resolvers_list=resolvers_list,
+            smiles_selection_mode=smiles_selection_mode,
+            detailed_name_dict=True,  # Need detailed name dict
+            batch_size=batch_size,
+            normalize_unicode=normalize_unicode,
+            split_names_to_solve=split_names_to_solve,
+            resolve_peptide_shorthand=False,  # Prevent recursion
+            attempt_name_correction=False,  # Prevent recursion
+        )
+        for k, v in corrected_names_original_names_mapping_dict.items():
+            if k in corrected_compounds_out_dict:
+                compounds_out_dict[v] = corrected_compounds_out_dict[k]
+                compounds_out_dict[v]["name_correction_info"] = corrected_names_dict[v]
 
     if not detailed_name_dict:
         return {k: v.get("SMILES", "") for k, v in compounds_out_dict.items()}
