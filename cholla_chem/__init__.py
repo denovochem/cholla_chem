@@ -1,4 +1,4 @@
-"""name_to_smiles initialization."""
+"""cholla_chem initialization."""
 
 from .main import (
     ChemSpiPyResolver,

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from rdkit import Chem
 
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 
 # =============================================================================

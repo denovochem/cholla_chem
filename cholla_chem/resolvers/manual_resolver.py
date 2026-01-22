@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 
 # Get the directory of the current file
@@ -17,7 +17,7 @@ def load_default_manual_name_dict() -> Dict[str, str]:
     """Load manual name dictionary from package data using importlib.resources."""
     # Open the file as text from within the package
     with resources.open_text(
-        "placeholder_name.datafiles.name_dicts", "manual_name_dict.json"
+        "cholla_chem.datafiles.name_dicts", "manual_name_dict.json"
     ) as f:
         return json.load(f)
 

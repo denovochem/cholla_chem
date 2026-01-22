@@ -10,10 +10,11 @@ When different resolvers disagree on the SMILES for a given compound, the SMILES
 - 'random': Pick a random SMILES.
 - 'highest_symmetry': Pick the SMILES with the highest symmetry.
 
+
 ### Custom SMILES selection functions
 You can also pass a function to resolve_compounds_to_smiles as the smiles_selection_mode to use custom selection functions. For example:
 ```
-from placeholder_name.main import resolve_compounds_to_smiles
+from cholla_chem.main import resolve_compounds_to_smiles
 from typing import Dict, List, Tuple
 
 def reverse_alphabetical(

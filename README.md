@@ -1,9 +1,9 @@
-# placeholder_name
+# ChollaChem
 [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.python.org/pypi/PubChemPy)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/name_to_smiles/graphs/commit-activity)
-[![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/name_to_smiles/blob/main/LICENSE)
-[![Tests](https://img.shields.io/github/actions/workflow/status/denovochem/name_to_smiles/tests.yml?logo=github&logoColor=%23ffffff&label=tests)](https://github.com/denovochem/name_to_smiles/actions/workflows/tests.yml)
-[![Docs](https://img.shields.io/readthedocs/pubchempy?logo=readthedocs&logoColor=%23ffffff)](https://denovochem.github.io/name_to_smiles/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
+[![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
+[![Run Tests](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml)
+[![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
@@ -30,16 +30,16 @@ When resolvers disagree on the SMILES for a given compound, a variety of SMILES 
 
 ## Installation
 
-Install placeholder_name with pip directly from this repo:
+Install ChollaChem with pip directly from this repo:
 
 ```shell
-pip install git+https://github.com/denovochem/name_to_smiles.git
+pip install git+https://github.com/denovochem/cholla_chem.git
 ```
 
 ## Basic usage
 Resolve chemical names to SMILES by passing a string or a list of strings:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
+from ChollaChem.core import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
 
@@ -48,7 +48,7 @@ resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
 
 See detailed information including which resolver returned which SMILES with detailed_name_dict=True:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
+from ChollaChem.core import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(
     ['2-acetyloxybenzoic acid'], 
@@ -70,8 +70,8 @@ Many aspects of the name-to-SMILES resolution process can be customized, includi
 
 In this example, we resolve chemical names with OPSIN, PubChem, and CIRPy, and use a custom consensus weighting approach to pick the best SMILES:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
-from placeholder_name import OpsinNameResolver, PubChemNameResolver, CIRpyNameResolver
+from ChollaChem.core import resolve_compounds_to_smiles
+from ChollaChem.core.name_resolvers import OpsinNameResolver, PubChemNameResolver, CIRpyNameResolver
 
 opsin_resolver = OpsinNameResolver(
     resolver_name='opsin', 
@@ -106,13 +106,13 @@ resolved_smiles = resolve_compounds_to_smiles(
 See documentation for more details. 
 
 ## Documentation
-Full documentation is availible [here](https://denovochem.github.io/name_to_smiles/)
+Full documentation is availible [here](https://denovochem.github.io/cholla_chem/)
 
 ## Contributing
 
 - Feature ideas and bug reports are welcome on the Issue Tracker.
-- Fork the [source code](https://github.com/denovochem/name_to_smiles) on GitHub, make changes and file a pull request.
+- Fork the [source code](https://github.com/denovochem/cholla_chem) on GitHub, make changes and file a pull request.
 
 ## License
 
-placeholder_name is licensed under the [MIT license](https://github.com/denovochem/name_to_smiles/blob/main/LICENSE).
+ChollaChem is licensed under the [MIT license](https://github.com/denovochem/cholla_chem/blob/main/LICENSE).

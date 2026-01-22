@@ -1,12 +1,12 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so we can import core modules
+# Ensure project root is on sys.path so we can import cholla_chem modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from placeholder_name.name_manipulation.split_names import get_delimiter_split_dict  # noqa: E402
+from cholla_chem.name_manipulation.split_names import get_delimiter_split_dict  # noqa: E402
 
 
 def test_no_delimiters_in_name_returns_empty_list_and_no_entry():

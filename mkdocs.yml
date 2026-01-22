@@ -1,7 +1,7 @@
-site_name: placeholder_name
+site_name: ChollaChem
 site_description: Convert chemical names to SMILES
-repo_url: https://github.com/denovochem/name_to_smiles
-repo_name: denovochem/name_to_smiles
+repo_url: https://github.com/denovochem/cholla_chem
+repo_name: denovochem/cholla_chem
 
 theme:
   name: material
@@ -19,7 +19,7 @@ plugins:
       handlers:
         python:
           options:
-            docstring_style: google  # or numpy, sphinx
+            docstring_style: google
             show_source: true
             show_root_heading: true
 

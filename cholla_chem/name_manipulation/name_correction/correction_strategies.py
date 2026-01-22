@@ -10,17 +10,17 @@ import re
 from typing import ClassVar, Dict, List, Optional, Set, Tuple
 
 from flashtext import KeywordProcessor
-from placeholder_name.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     Correction,
     CorrectionType,
     CorrectorConfig,
 )
-from placeholder_name.name_manipulation.name_correction.regexes import PATTERNS
-from placeholder_name.utils.constants import (
+from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
+from cholla_chem.utils.constants import (
     KEYBOARD_NEIGHBOR_SUBSTITUTIONS,
     OCR_SUBSTITUTIONS,
 )
-# from placeholder_name.utils.logging_config import logger
+# from cholla_chem.utils.logging_config import logger
 
 # Get the directory of the current file
 BASE_DIR = Path(__file__).resolve().parent

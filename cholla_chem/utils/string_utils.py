@@ -1,8 +1,8 @@
 import re
 from typing import List, Dict
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
-from placeholder_name.utils.constants import (
+from cholla_chem.utils.constants import (
     COMMON_CHARS_WHITELIST,
     NON_LATIN1_REPLACEMENTS,
 )

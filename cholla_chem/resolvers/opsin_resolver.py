@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 
 from py2opsin import py2opsin
 
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 
 def name_to_smiles_opsin(

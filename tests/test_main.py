@@ -3,12 +3,12 @@
 
 # import pytest
 
-# # Ensure project root is on sys.path so we can import core modules
+# # Ensure project root is on sys.path so we can import cholla_chem modules
 # PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 # if PROJECT_ROOT not in sys.path:
 #     sys.path.insert(0, PROJECT_ROOT)
 
-# from placeholder_name.main import (  # noqa: E402
+# from cholla_chem.main import (  # noqa: E402
 #     ChemicalNameResolver,
 #     assemble_compounds_resolution_dict,
 #     assemble_split_compounds_resolution_dict,
@@ -40,7 +40,7 @@
 # def test_clean_strings_and_return_mapping_basic(monkeypatch):
 #     """clean_strings_and_return_mapping should call clean_strings on each item and map originals to cleaned."""
 
-#     from placeholder_name import main as main_module
+#     from cholla_chem import main as main_module
 
 #     calls = []
 
@@ -49,7 +49,7 @@
 #         return s.strip().lower()
 
 #     monkeypatch.setattr(
-#         "placeholder_name.utils.string_utils.clean_strings",
+#         "cholla_chem.utils.string_utils.clean_strings",
 #         fake_clean_strings,
 #         raising=True,
 #     )
@@ -86,7 +86,7 @@
 #         return current_dict, split_parts
 
 #     monkeypatch.setattr(
-#         "placeholder_name.name_manipulation.split_names.get_delimiter_split_dict",
+#         "cholla_chem.name_manipulation.split_names.get_delimiter_split_dict",
 #         fake_get_delimiter_split_dict,
 #         raising=True,
 #     )
@@ -133,7 +133,7 @@
 #         return smiles.upper() if smiles else ""
 
 #     monkeypatch.setattr(
-#         "placeholder_name.utils.chem_utils.canonicalize_smiles",
+#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
 #         fake_canonicalize,
 #         raising=True,
 #     )
@@ -162,7 +162,7 @@
 #         return smiles
 
 #     monkeypatch.setattr(
-#         "placeholder_name.utils.chem_utils.canonicalize_smiles",
+#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
 #         fake_canonicalize,
 #         raising=True,
 #     )
@@ -192,7 +192,7 @@
 #         }
 
 #     monkeypatch.setattr(
-#         "placeholder_name.name_manipulation.split_names.resolve_delimiter_split_dict",
+#         "cholla_chem.name_manipulation.split_names.resolve_delimiter_split_dict",
 #         fake_resolve_delimiter_split_dict,
 #         raising=True,
 #     )
@@ -244,7 +244,7 @@
 #             return "S2", ["r2"]
 
 #     monkeypatch.setattr(
-#         "placeholder_name.main.SMILESSelector",
+#         "cholla_chem.main.SMILESSelector",
 #         FakeSelector,
 #         raising=True,
 #     )
@@ -347,20 +347,20 @@
 
 #     # Avoid depending on real cleaning/splitting behavior: make them pass-through
 #     monkeypatch.setattr(
-#         "placeholder_name.main.clean_strings_and_return_mapping",
+#         "cholla_chem.main.clean_strings_and_return_mapping",
 #         lambda names: (names, {n: n for n in names}),
 #         raising=True,
 #     )
 
 #     monkeypatch.setattr(
-#         "placeholder_name.main.split_compounds_on_delimiters_and_return_mapping",
+#         "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
 #         lambda names: (names, {}),
 #         raising=True,
 #     )
 
 #     # Canonicalization is also identity for this test
 #     monkeypatch.setattr(
-#         "placeholder_name.utils.chem_utils.canonicalize_smiles",
+#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
 #         lambda s: s,
 #         raising=True,
 #     )
@@ -377,7 +377,7 @@
 #             return smiles, entry["SMILES_dict"].get(smiles, [])
 
 #     monkeypatch.setattr(
-#         "placeholder_name.main.SMILESSelector",
+#         "cholla_chem.main.SMILESSelector",
 #         FakeSelector,
 #         raising=True,
 #     )

@@ -3,14 +3,14 @@ from dataclasses import dataclass, field
 import re
 from typing import Dict, List, Optional, Tuple
 
-from placeholder_name.resolvers.inorganic_resolver.inorganic_resolver_tokens import (
+from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver_tokens import (
     COUNTER_ION_DATABASE,
     LIGAND_DATABASE,
     LigandInfo,
     METAL_DATABASE,
     MetalInfo,
 )
-# from placeholder_name.utils.logging_config import logger
+# from cholla_chem.utils.logging_config import logger
 
 
 @dataclass

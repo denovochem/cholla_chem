@@ -1,5 +1,5 @@
 from typing import List, Tuple, Dict
-from placeholder_name.utils.string_utils import clean_strings
+from cholla_chem.utils.string_utils import clean_strings
 
 
 def normalize_unicode_and_return_mapping(

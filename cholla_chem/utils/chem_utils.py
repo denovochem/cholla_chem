@@ -1,6 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 tautomer_enumerator = rdMolStandardize.TautomerEnumerator()
 

@@ -1,12 +1,12 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so we can import core modules
+# Ensure project root is on sys.path so we can import cholla_chem modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from placeholder_name.resolvers.opsin_resolver import (  # noqa: E402
+from cholla_chem.resolvers.opsin_resolver import (  # noqa: E402
     name_to_smiles_opsin,
 )
 
@@ -39,7 +39,7 @@ def test_name_to_smiles_opsin_success(monkeypatch):
         return smiles, failures
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.opsin_resolver.py2opsin",
+        "cholla_chem.resolvers.opsin_resolver.py2opsin",
         fake_py2opsin,
         raising=True,
     )
@@ -80,7 +80,7 @@ def test_name_to_smiles_opsin_records_failures(monkeypatch):
         return smiles, failures
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.opsin_resolver.py2opsin",
+        "cholla_chem.resolvers.opsin_resolver.py2opsin",
         fake_py2opsin,
         raising=True,
     )
@@ -109,7 +109,7 @@ def test_name_to_smiles_opsin_strips_newlines(monkeypatch):
         return smiles, failures
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.opsin_resolver.py2opsin",
+        "cholla_chem.resolvers.opsin_resolver.py2opsin",
         fake_py2opsin,
         raising=True,
     )
@@ -137,7 +137,7 @@ def test_name_to_smiles_opsin_mismatched_lengths_logs_warning_and_returns_empty(
         return smiles, failures
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.opsin_resolver.py2opsin",
+        "cholla_chem.resolvers.opsin_resolver.py2opsin",
         fake_py2opsin,
         raising=True,
     )
@@ -150,7 +150,7 @@ def test_name_to_smiles_opsin_mismatched_lengths_logs_warning_and_returns_empty(
             warnings.append(msg)
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.opsin_resolver.logger",
+        "cholla_chem.resolvers.opsin_resolver.logger",
         FakeLogger,
         raising=True,
     )

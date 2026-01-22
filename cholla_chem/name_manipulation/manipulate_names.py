@@ -1,16 +1,16 @@
 from typing import Any, Dict, List, Optional
 
-from placeholder_name.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectorConfig,
 )
-from placeholder_name.name_manipulation.name_correction.name_corrector import (
+from cholla_chem.name_manipulation.name_correction.name_corrector import (
     ChemNameCorrector,
 )
-from placeholder_name.name_manipulation.peptide_shorthand_handler import (
+from cholla_chem.name_manipulation.peptide_shorthand_handler import (
     looks_like_peptide_shorthand,
     peptide_shorthand_to_iupac,
 )
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 
 corrector = ChemNameCorrector()

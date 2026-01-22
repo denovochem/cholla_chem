@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import cirpy
 
-from placeholder_name.utils.logging_config import logger
+from cholla_chem.utils.logging_config import logger
 
 
 def retrieve_cirpy_results(compound_name: str) -> str:

@@ -1,22 +1,22 @@
 from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 
-from placeholder_name.name_manipulation.name_correction.correction_strategies import (
+from cholla_chem.name_manipulation.name_correction.correction_strategies import (
     CorrectionStrategy,
     BracketBalancingStrategy,
     CharacterSubstitutionStrategy,
     LocantCorrectionStrategy,
     PunctuationRestorationStrategy,
 )
-from placeholder_name.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectionCandidate,
     CorrectorConfig,
     Correction,
 )
-from placeholder_name.name_manipulation.name_correction.scoring import (
+from cholla_chem.name_manipulation.name_correction.scoring import (
     ChemicalNameScorer,
 )
-from placeholder_name.name_manipulation.name_correction.validators import (
+from cholla_chem.name_manipulation.name_correction.validators import (
     Validator,
     OPSINValidator,
 )

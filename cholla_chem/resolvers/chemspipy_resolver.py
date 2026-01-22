@@ -2,8 +2,8 @@ from typing import Dict, List
 
 from chemspipy import ChemSpider
 
-from placeholder_name.utils.logging_config import logger
-from placeholder_name.utils.string_utils import filter_latin1_compatible
+from cholla_chem.utils.logging_config import logger
+from cholla_chem.utils.string_utils import filter_latin1_compatible
 
 
 def name_to_smiles_chemspipy(

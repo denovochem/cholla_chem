@@ -1,12 +1,12 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so we can import core modules
+# Ensure project root is on sys.path so we can import cholla_chem modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from placeholder_name.resolvers.cirpy_resolver import (  # noqa: E402
+from cholla_chem.resolvers.cirpy_resolver import (  # noqa: E402
     retrieve_cirpy_results,
     name_to_smiles_cirpy,
 )
@@ -20,7 +20,7 @@ def test_retrieve_cirpy_results_success(monkeypatch):
         return f"SMILES_{compound_name}"
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.cirpy_resolver.cirpy.resolve",
+        "cholla_chem.resolvers.cirpy_resolver.cirpy.resolve",
         fake_resolve,
         raising=True,
     )
@@ -40,7 +40,7 @@ def test_retrieve_cirpy_results_exception_returns_empty_string(monkeypatch):
         raise RuntimeError("Test error from cirpy")
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.cirpy_resolver.cirpy.resolve",
+        "cholla_chem.resolvers.cirpy_resolver.cirpy.resolve",
         fake_resolve,
         raising=True,
     )
@@ -58,7 +58,7 @@ def test_name_to_smiles_cirpy_uses_retrieve_for_each_name(monkeypatch):
         return f"SMILES_{compound_name}"
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.cirpy_resolver.cirpy.resolve",
+        "cholla_chem.resolvers.cirpy_resolver.cirpy.resolve",
         fake_resolve,
         raising=True,
     )

@@ -1,6 +1,6 @@
 Resolve chemical names to SMILES by passing a string or a list of strings:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
+from cholla_chem import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
 
@@ -9,7 +9,7 @@ resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
 
 See detailed information including which resolver returned which SMILES with detailed_name_dict=True:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
+from cholla_chem import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(
     ['2-acetyloxybenzoic acid'], 
@@ -26,13 +26,14 @@ resolved_smiles = resolve_compounds_to_smiles(
 }}"
 ```
 
+
 ## Advanced usage
 Many aspects of the name-to-SMILES resolution process can be customized, including the resolvers that are used, the configuration of those resolvers, and the strategy used to pick the best SMILES.
 
 In this example, we resolve chemical names with OPSIN, PubChem, and CIRPy, and use a custom consensus weighting approach to pick the best SMILES:
 ```pycon
-from placeholder_name import resolve_compounds_to_smiles
-from placeholder_name import (
+from cholla_chem import resolve_compounds_to_smiles
+from cholla_chem import (
     OpsinNameResolver, 
     PubChemNameResolver, 
     CIRpyNameResolver

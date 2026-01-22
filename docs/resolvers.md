@@ -1,4 +1,4 @@
-placeholder_name uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
+Cholla uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
 
 - PubChemNameResolver('pubchem_default', resolver_weight=2),
 - OpsinNameResolver('opsin_default', resolver_weight=3),
@@ -10,8 +10,8 @@ placeholder_name uses a variety of resolvers to convert chemical names to SMILES
 
 Initialize resolvers with a name (required), and resolver_weight (optional):
 ```
-from placeholder_name import resolve_compounds_to_smiles
-from placeholder_name import (
+from cholla_chem import resolve_compounds_to_smiles
+from cholla_chem import (
     OpsinNameResolver, 
     PubChemNameResolver, 
     CIRpyNameResolver
@@ -46,6 +46,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 }}"
 ```
 
+
 ## OpsinNameResolver
 This resolver uses a fork of the [py2opsin](https://github.com/denovochem/py2opsin) library that returns the error message from OPSIN if a name cannot be resolved. This resolver can be configured with the following arguments:
 
@@ -59,7 +60,7 @@ Arguments:
 Default weight for 'weighted' SMILES selection method: 3
 
 ```
-from placeholder_name import OpsinNameResolver
+from cholla_chem import OpsinNameResolver
 
 opsin_resolver = OpsinNameResolver(
     resolver_name='opsin',
@@ -76,13 +77,14 @@ resolved_smiles = resolve_compounds_to_smiles(
 )
 ```
 
+
 ## PubChemNameResolver
 This resolver uses a fork of the [PubChemPy](https://github.com/denovochem/PubChemPy) library which implements batching with the Power User Gateway XML schema to significantly speedup SMILES resolutions.
 
 Default weight for 'weighted' SMILES selection method: 2
 
 ```
-from placeholder_name import PubChemNameResolver
+from cholla_chem import PubChemNameResolver
 
 pubchem_resolver = PubChemNameResolver(
     resolver_name='pubchem', 
@@ -92,13 +94,14 @@ pubchem_resolver = PubChemNameResolver(
 resolved_smiles = resolve_compounds_to_smiles(['acetone'], [pubchem_resolver])
 ```
 
+
 ## CIRpyNameResolver
 This resolver uses the python library [CIRpy](https://github.com/mcs07/CIRpy), a Python interface for the Chemical Identifier Resolver (CIR) by the CADD Group at the NCI/NIH.
 
 Default weight for 'weighted' SMILES selection method: 1
 
 ```
-from placeholder_name import CIRpyNameResolver
+from cholla_chem import CIRpyNameResolver
 
 cirpy_resolver = CIRpyNameResolver(
     resolver_name='cirpy', 
@@ -108,13 +111,14 @@ cirpy_resolver = CIRpyNameResolver(
 resolved_smiles = resolve_compounds_to_smiles(['acetone'], [cirpy_resolver])
 ```
 
+
 ## ChemSpiPyNameResolver
 This resolver uses the python library [ChemSpiPy](https://github.com/mcs07/ChemSpiPy), a Python interface for the ChemSpider API by the RSC. This resolver must be initialized with a ChemSpider API key, which can be obtained [here](https://developer.rsc.org/getting-started).
 
 Default weight for 'weighted' SMILES selection method: 3
 
 ```
-from placeholder_name import ChemSpiPyNameResolver
+from cholla_chem import ChemSpiPyNameResolver
 
 chemspider_resolver = ChemSpiPyNameResolver(
     resolver_name='chemspider', 
@@ -125,13 +129,14 @@ chemspider_resolver = ChemSpiPyNameResolver(
 resolved_smiles = resolve_compounds_to_smiles(['acetone'], [chemspider_resolver])
 ```
 
+
 ## ManualNameResolver 
 This resolver uses a dataset of manually curated names and their corresponding SMILES, especially focused on common names that are incorrectly resolved by other resolvers (e.g. 'NaH').
 
 Default weight for 'weighted' SMILES selection method: 10
 
 ```
-from placeholder_name import ManualNameResolver
+from cholla_chem import ManualNameResolver
 
 manual_resolver = ManualNameResolver(
     resolver_name='manual', 
@@ -146,7 +151,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 ManualNameResolver can also be initialized with a custom dictionary mapping chemical names to SMILES:
 ```
-from placeholder_name import ManualNameResolver
+from cholla_chem import ManualNameResolver
 
 custom_name_dict = {'Foobar': 'c1ccccc1'}
 
@@ -159,13 +164,14 @@ manual_resolver = ManualNameResolver(
 resolved_smiles = resolve_compounds_to_smiles(['Foobar'], [manual_resolver])
 ```
 
+
 ## StructuralFormulaNameResolver
 This resolver converts simple structural chemical formulas (e.g. 'CH3CH2CH2COOH') to SMILES.
 
 Default weight for 'weighted' SMILES selection method: 2
 
 ```
-from placeholder_name import StructuralFormulaNameResolver
+from cholla_chem import StructuralFormulaNameResolver
 
 structural_formula_resolver = StructuralFormulaNameResolver(
     resolver_name='structural_formula', 
@@ -178,13 +184,14 @@ resolved_smiles = resolve_compounds_to_smiles(
 )
 ```
 
+
 ## InorganicShorthandNameResolver
 This resolver converts inorganic chemical formulas (e.g. '[Cp*RhCl2]2') to SMILES.
 
 Default weight for 'weighted' SMILES selection method: 2
 
 ```
-from placeholder_name import InorganicShorthandNameResolver
+from cholla_chem import InorganicShorthandNameResolver
 
 inorganic_shorthand_resolver = InorganicShorthandNameResolver(
     resolver_name='inorganic_shorthand', 
@@ -197,12 +204,13 @@ resolved_smiles = resolve_compounds_to_smiles(
 )
 ```
 
+
 ## Custom Resolvers
 This library also supports using custom resolvers. To use a custom resolver, import the base class ChemicalNameResolver, and create a subclass with the format shown below. The name_to_smiles method is used to resolve compound names to SMILES. In this example, the method resolves names using a simple lookup dictionary, but it can be also used to call an API, use other name-to-SMILES libraries, run an algorithm, etc. This method must return a tuple of dictionaries, where the first dictionary maps chemical names (strings) to SMILES (strings). The second dictionary returns information (e.g. errors in the resolution process) to the detailed_name_dict by mapping chemical names (strings) to some message (strings).
 
 ```
-from placeholder_name import resolve_compounds_to_smiles
-from placeholder_name import ChemicalNameResolver
+from cholla_chem import resolve_compounds_to_smiles
+from cholla_chem import ChemicalNameResolver
 
 class MyCustomResolver(ChemicalNameResolver):
     """

@@ -1,12 +1,12 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so we can import core modules
+# Ensure project root is on sys.path so we can import cholla_chem modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from placeholder_name.resolvers.chemspipy_resolver import (  # noqa: E402
+from cholla_chem.resolvers.chemspipy_resolver import (  # noqa: E402
     name_to_smiles_chemspipy,
 )
 
@@ -52,13 +52,13 @@ def test_name_to_smiles_chemspipy_basic_mapping(monkeypatch):
         return names
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.ChemSpider",
+        "cholla_chem.resolvers.chemspipy_resolver.ChemSpider",
         FakeChemSpider,
         raising=True,
     )
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.chemspipy_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
@@ -124,13 +124,13 @@ def test_name_to_smiles_chemspipy_respects_filter_latin1(monkeypatch):
         return filtered_names
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.ChemSpider",
+        "cholla_chem.resolvers.chemspipy_resolver.ChemSpider",
         FakeChemSpider,
         raising=True,
     )
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.chemspipy_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
@@ -194,13 +194,13 @@ def test_name_to_smiles_chemspipy_skips_empty_results_and_missing_smiles(monkeyp
             return SingleResult(f"SMILES_{compound_name}")
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.ChemSpider",
+        "cholla_chem.resolvers.chemspipy_resolver.ChemSpider",
         FakeChemSpider,
         raising=True,
     )
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.chemspipy_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
@@ -223,7 +223,7 @@ def test_name_to_smiles_chemspipy_init_failure_returns_empty(monkeypatch):
             raise RuntimeError("Failed to initialize ChemSpider")
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.ChemSpider",
+        "cholla_chem.resolvers.chemspipy_resolver.ChemSpider",
         FailingChemSpider,
         raising=True,
     )
@@ -235,7 +235,7 @@ def test_name_to_smiles_chemspipy_init_failure_returns_empty(monkeypatch):
         return names
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.chemspipy_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.chemspipy_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )

@@ -1,6 +1,6 @@
 from typing import List
 
-from placeholder_name.utils.constants import (
+from cholla_chem.utils.constants import (
     AA_FULL,
     # AMINO_ACID_SUB_SITES,
     COUNTER_ACIDS,
@@ -11,7 +11,7 @@ from placeholder_name.utils.constants import (
     PROTECTING_GROUPS,
     SPECIAL_CASES,
 )
-# from placeholder_name.utils.logging_config import logger
+# from cholla_chem.utils.logging_config import logger
 
 
 def generate_side_chain_protections():

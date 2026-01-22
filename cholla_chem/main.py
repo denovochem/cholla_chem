@@ -5,31 +5,31 @@ import warnings
 
 from rdkit import RDLogger
 
-from placeholder_name.name_manipulation.manipulate_names import correct_names
-from placeholder_name.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.manipulate_names import correct_names
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectorConfig,
 )
-from placeholder_name.name_manipulation.split_names import (
+from cholla_chem.name_manipulation.split_names import (
     get_delimiter_split_dict,
     resolve_delimiter_split_dict,
 )
-from placeholder_name.name_manipulation.unicode_normalization import (
+from cholla_chem.name_manipulation.unicode_normalization import (
     normalize_unicode_and_return_mapping,
 )
-from placeholder_name.resolvers.chemspipy_resolver import name_to_smiles_chemspipy
-from placeholder_name.resolvers.cirpy_resolver import name_to_smiles_cirpy
-from placeholder_name.resolvers.inorganic_resolver.inorganic_resolver import (
+from cholla_chem.resolvers.chemspipy_resolver import name_to_smiles_chemspipy
+from cholla_chem.resolvers.cirpy_resolver import name_to_smiles_cirpy
+from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver import (
     name_to_smiles_inorganic_shorthand,
 )
-from placeholder_name.resolvers.manual_resolver import name_to_smiles_manual
-from placeholder_name.resolvers.opsin_resolver import name_to_smiles_opsin
-from placeholder_name.resolvers.pubchem_resolver import name_to_smiles_pubchem
-from placeholder_name.resolvers.strutural_formula_resolver.structural_formula_resolver import (
+from cholla_chem.resolvers.manual_resolver import name_to_smiles_manual
+from cholla_chem.resolvers.opsin_resolver import name_to_smiles_opsin
+from cholla_chem.resolvers.pubchem_resolver import name_to_smiles_pubchem
+from cholla_chem.resolvers.strutural_formula_resolver.structural_formula_resolver import (
     name_to_smiles_structural_formula,
 )
-from placeholder_name.smiles_selector import SMILESSelector
-from placeholder_name.utils.chem_utils import canonicalize_smiles
-from placeholder_name.utils.logging_config import configure_logging, logger
+from cholla_chem.smiles_selector import SMILESSelector
+from cholla_chem.utils.chem_utils import canonicalize_smiles
+from cholla_chem.utils.logging_config import configure_logging, logger
 
 # Configure loguru logging
 configure_logging(level="WARNING")
@@ -692,6 +692,7 @@ def resolve_compounds_to_smiles(
     )
 
     if attempt_name_correction:
+        # Attempt to correct compound names and then resolve them again.
         corrected_names_dict = correct_names(
             compounds_out_dict, name_correction_config, resolve_peptide_shorthand
         )

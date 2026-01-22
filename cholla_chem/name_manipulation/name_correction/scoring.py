@@ -6,11 +6,11 @@ import re
 from typing import ClassVar, Dict, Optional
 from Levenshtein import ratio as levenshtein_ratio
 
-from placeholder_name.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectionCandidate,
     CorrectorConfig,
 )
-from placeholder_name.name_manipulation.name_correction.regexes import PATTERNS
+from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
 
 # Get the directory of the current file
 BASE_DIR = Path(__file__).resolve().parent

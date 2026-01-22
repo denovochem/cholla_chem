@@ -1,12 +1,12 @@
 import os
 import sys
 
-# Ensure project root is on sys.path so we can import core modules
+# Ensure project root is on sys.path so we can import cholla_chem modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from placeholder_name.resolvers.manual_resolver import (  # noqa: E402
+from cholla_chem.resolvers.manual_resolver import (  # noqa: E402
     process_name_dict,
     name_to_smiles_manual,
 )
@@ -42,7 +42,7 @@ def test_name_to_smiles_manual_with_provided_dict(monkeypatch):
         )
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.manual_resolver.load_default_manual_name_dict",
+        "cholla_chem.resolvers.manual_resolver.load_default_manual_name_dict",
         fake_loader,
         raising=True,
     )
@@ -69,7 +69,7 @@ def test_name_to_smiles_manual_uses_default_dict(monkeypatch):
         }
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.manual_resolver.load_default_manual_name_dict",
+        "cholla_chem.resolvers.manual_resolver.load_default_manual_name_dict",
         fake_loader,
         raising=True,
     )
@@ -81,7 +81,7 @@ def test_name_to_smiles_manual_uses_default_dict(monkeypatch):
         log_messages.append(msg)
 
     monkeypatch.setattr(
-        "placeholder_name.resolvers.manual_resolver.logger",
+        "cholla_chem.resolvers.manual_resolver.logger",
         type("_L", (), {"info": staticmethod(fake_logger_info)}),
         raising=True,
     )

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "placeholder_name"
+name = "ChollaChem"
 version = "0.0.1"
 authors = [
     {name = "De Novo Chem Team", email = "carson.britt@denovochem.com"}
@@ -24,16 +24,16 @@ classifiers = [
 dynamic = ["dependencies"]
 
 [project.urls]
-Homepage = "https://github.com/denovochem/name_to_smiles"
+Homepage = "https://github.com/denovochem/cholla_chem"
 
 [tool.setuptools]
 zip-safe = false
 
 [tool.setuptools.packages.find]
-# This is equivalent to find_packages()
+where = ["."]
 
 [tool.setuptools.package-data]
-placeholder_name = [
+core = [
     "datafiles/name_dicts/*.json",
 ]
 
@@ -42,7 +42,3 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.mypy]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["placeholder_name.name_manipulation.name_correction"]
-ignore_errors = true
