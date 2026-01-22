@@ -33,7 +33,7 @@ zip-safe = false
 where = ["."]
 
 [tool.setuptools.package-data]
-core = [
+cholla_chem = [
     "datafiles/name_dicts/*.json",
 ]
 
