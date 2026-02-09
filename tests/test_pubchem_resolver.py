@@ -89,7 +89,7 @@ def test_name_to_smiles_pubchem_handles_none_results(monkeypatch):
 
 
 def test_name_to_smiles_pubchem_logs_length_mismatch(monkeypatch):
-    """If lengths mismatch, a warning should be logged."""
+    """If lengths mismatch, a warning should be logged and an empty dictionary should be returned."""
 
     def fake_filter_latin1_compatible(names):
         return names
@@ -131,8 +131,7 @@ def test_name_to_smiles_pubchem_logs_length_mismatch(monkeypatch):
     result = name_to_smiles_pubchem(compound_names)
 
     # Because of zip, only the first name will have an entry
-    assert set(result.keys()) == {"first"}
-    assert result["first"] == "SMILES_only_first"
+    assert result == {}
 
     # A warning about mismatching lengths should have been logged
     assert any("Mismatching lengths" in msg for msg in logged_warnings)
