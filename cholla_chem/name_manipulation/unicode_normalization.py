@@ -1,4 +1,5 @@
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
+
 from cholla_chem.utils.string_utils import clean_strings
 
 

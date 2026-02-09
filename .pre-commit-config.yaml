@@ -19,7 +19,8 @@ repos:
         args: [
           ".",
           "--ignore-missing-imports",
-          "--explicit-package-bases"
+          "--explicit-package-bases",
+          "--no-site-packages",
         ]
         types: [python]
         pass_filenames: false

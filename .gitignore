@@ -2,6 +2,8 @@
 *
 
 # Root
+!.github/
+!.github/workflows/
 !.github/workflows/docs.yml
 !.github/workflows/tests.yml
 !.gitignore
@@ -22,6 +24,7 @@
 !docs/reference.md
 !docs/resolvers.md
 !docs/smiles_selection.md
+!docs/contributing.md
 !docs/stylesheets/extra.css
 
 # Source Code

@@ -1,19 +1,20 @@
 """cholla_chem initialization."""
 
-from .main import (
+from cholla_chem.main import (
+    ChemicalNameResolver,
     ChemSpiPyResolver,
     CIRpyNameResolver,
-    ChemicalNameResolver,
+    InorganicShorthandNameResolver,
     ManualNameResolver,
     OpsinNameResolver,
     PubChemNameResolver,
     StructuralFormulaNameResolver,
-    InorganicShorthandNameResolver,
     resolve_compounds_to_smiles,
 )
-
-from .name_manipulation.name_correction.name_corrector import ChemNameCorrector
-from .name_manipulation.name_correction.dataclasses import CorrectorConfig
+from cholla_chem.name_manipulation.name_correction.dataclasses import CorrectorConfig
+from cholla_chem.name_manipulation.name_correction.name_corrector import (
+    ChemNameCorrector,
+)
 
 __all__ = [
     "resolve_compounds_to_smiles",
