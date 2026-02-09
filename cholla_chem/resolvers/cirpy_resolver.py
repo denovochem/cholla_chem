@@ -19,7 +19,7 @@ def retrieve_cirpy_results(compound_name: str) -> str:
         smiles = cirpy.resolve(compound_name, "smiles")
 
     except Exception as e:
-        logger.error(f"Exception in CIRpy query: {str(e)}")
+        logger.warning(f"Exception in CIRpy query: {str(e)}")
         return ""
 
     return smiles

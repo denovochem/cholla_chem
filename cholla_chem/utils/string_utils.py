@@ -1,11 +1,11 @@
 import re
-from typing import List, Dict
-from cholla_chem.utils.logging_config import logger
+from typing import Dict, List
 
 from cholla_chem.utils.constants import (
     COMMON_CHARS_WHITELIST,
     NON_LATIN1_REPLACEMENTS,
 )
+from cholla_chem.utils.logging_config import logger
 
 
 def safe_str(x: object) -> str | None:
@@ -44,8 +44,9 @@ def clean_strings(
     Returns:
         The cleaned string with the specified characters removed.
     """
-    for char, replacement in chars_to_replace_dict.items():
-        string = string.replace(char, replacement)
+    # sort longest to shortest to avoid partial replacements
+    for char in sorted(chars_to_replace_dict, key=len, reverse=True):
+        string = string.replace(char, chars_to_replace_dict[char])
     string = string.replace("\n", "")
     string = remove_tags(string)
     return string
@@ -70,3 +71,24 @@ def remove_tags(string: str) -> str:
     """Remove HTML tags from a string."""
     pattern = r"<.*?>"
     return re.sub(pattern, "", string)
+
+
+def cas_check_digit(potential_cas_number: str) -> bool:
+    check_digit = potential_cas_number[-1]
+    reversed_remaining_digits = potential_cas_number[::-1][1:]
+    total = sum(
+        (i + 1) * int(digit) for i, digit in enumerate(reversed_remaining_digits)
+    )
+    if total % 10 == int(check_digit):
+        return True
+    return False
+
+
+def is_valid_cas(synonym: str) -> bool:
+    synonym = synonym.replace("-", "")
+    if not synonym.isdigit():
+        return False
+    if len(synonym) < 3:
+        return False
+
+    return cas_check_digit(synonym)

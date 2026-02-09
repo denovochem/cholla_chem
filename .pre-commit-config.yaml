@@ -10,29 +10,30 @@ repos:
         args: [--check]
         types_or: [python, pyi]
   
-  # - repo: local
-  #   hooks:
-  #     - id: mypy
-  #       name: mypy
-  #       entry: mypy
-  #       language: system
-  #       args: [
-  #         ".",
-  #         "--ignore-missing-imports",
-  #         "--explicit-package-bases"
-  #       ]
-  #       types: [python]
-  #       pass_filenames: false
-  #       require_serial: true
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        args: [
+          ".",
+          "--ignore-missing-imports",
+          "--explicit-package-bases",
+          "--no-site-packages",
+        ]
+        types: [python]
+        pass_filenames: false
+        require_serial: true
   
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: pytest
-  #       entry: pytest
-  #       language: system
-  #       pass_filenames: false
-  #       # Only run when Python files change
-  #       types: [python]
-  #       # Run on push instead of every commit (faster workflow)
-  #       stages: [pre-push]
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        # Only run when Python files change
+        types: [python]
+        # Run on push instead of every commit (faster workflow)
+        stages: [pre-push]

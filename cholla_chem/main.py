@@ -64,6 +64,7 @@ class ChemicalNameResolver(ABC):
                 "Invalid input: resolver_weight must be a number between 0-1000."
             )
         self._resolver_weight: float = float(resolver_weight)
+        self._requires_internet: bool = False
 
     @property
     def resolver_name(self) -> str:
@@ -74,6 +75,11 @@ class ChemicalNameResolver(ABC):
     def resolver_weight(self) -> float:
         """Return resolver_weight."""
         return self._resolver_weight
+
+    @property
+    def requires_internet(self) -> bool:
+        """Return requires_internet."""
+        return self._requires_internet
 
     @abstractmethod
     def name_to_smiles(
@@ -113,6 +119,7 @@ class OpsinNameResolver(ChemicalNameResolver):
         self._allow_radicals = allow_radicals
         self._allow_bad_stereo = allow_bad_stereo
         self._wildcard_radicals = wildcard_radicals
+        self._requires_internet = False
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -137,6 +144,7 @@ class PubChemNameResolver(ChemicalNameResolver):
 
     def __init__(self, resolver_name: str, resolver_weight: float = 2):
         super().__init__("pubchem", resolver_name, resolver_weight)
+        self._requires_internet = True
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -155,6 +163,7 @@ class CIRpyNameResolver(ChemicalNameResolver):
 
     def __init__(self, resolver_name: str, resolver_weight: float = 1):
         super().__init__("cirpy", resolver_name, resolver_weight)
+        self._requires_internet = True
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -179,6 +188,7 @@ class ChemSpiPyResolver(ChemicalNameResolver):
             if not isinstance(chemspider_api_key, str):
                 raise TypeError("Invalid input: chemspider_api_key must be a string.")
         self._chemspider_api_key = chemspider_api_key
+        self._requires_internet = True
 
     def name_to_smiles(
         self,
@@ -217,6 +227,7 @@ class ManualNameResolver(ChemicalNameResolver):
                     )
 
         self._provided_name_dict = provided_name_dict
+        self._requires_internet = False
 
     def name_to_smiles(
         self,
@@ -239,6 +250,7 @@ class StructuralFormulaNameResolver(ChemicalNameResolver):
 
     def __init__(self, resolver_name: str, resolver_weight: float = 2):
         super().__init__("structural_formula", resolver_name, resolver_weight)
+        self._requires_internet = False
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -257,6 +269,7 @@ class InorganicShorthandNameResolver(ChemicalNameResolver):
 
     def __init__(self, resolver_name: str, resolver_weight: float = 2):
         super().__init__("inorganic_shorthand", resolver_name, resolver_weight)
+        self._requires_internet = False
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -338,6 +351,11 @@ def split_compounds_on_delimiters_and_return_mapping(
             compound, delimiter_split_dict
         )
         compounds_split_parts_list.extend(compound_split_parts)
+    compounds_split_parts_list = list(set(compounds_split_parts_list))
+    compounds_split_parts_list = [c for c in compounds_split_parts_list if c]
+    compounds_split_parts_list = [
+        c for c in compounds_split_parts_list if c not in compounds_list
+    ]
     compounds_and_split_parts_list = compounds_list + compounds_split_parts_list
     compounds_and_split_parts_list = list(set(compounds_and_split_parts_list))
     return compounds_and_split_parts_list, delimiter_split_dict
@@ -361,9 +379,14 @@ def resolve_compounds_using_resolvers(
     """
     resolvers_out_dict = {}
     for resolver in resolvers_list:
+        out = {}
+        info_messages = {}
         for i in range(0, len(compounds_list), batch_size):
+            print(resolver, i)
             chunk = compounds_list[i : i + batch_size]
-            out, info_messages = resolver.name_to_smiles(chunk)
+            out_chunk, info_messages_chunk = resolver.name_to_smiles(chunk)
+            out.update(out_chunk)
+            info_messages.update(info_messages_chunk)
         resolvers_out_dict[resolver.resolver_name] = {
             "out": out,
             "info_messages": info_messages,
@@ -554,6 +577,7 @@ def resolve_compounds_to_smiles(
     split_names_to_solve: bool = True,
     resolve_peptide_shorthand: bool = True,
     attempt_name_correction: bool = True,
+    internet_connection_available: bool = True,
     name_correction_config: Optional[CorrectorConfig] = None,
 ) -> Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]:
     """
@@ -574,7 +598,8 @@ def resolve_compounds_to_smiles(
         resolve_peptide_shorthand (bool, optional): Whether to resolve peptide shorthand notation. Defaults to True.
         attempt_name_correction (bool, optional): Whether to attempt to correct compound names that are misspelled or contain typos.
             Defaults to True.
-        name_correction_config (bool, optional): Configuration for name correction. Defaults to None.
+        internet_connection_available (bool, optional): Whether an internet connection is available to resolve compound names. Defaults to True.
+        name_correction_config (CorrectorConfig, optional): Configuration for name correction. Defaults to None.
 
     Returns:
         Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]: A dictionary mapping each compound to its SMILES representation and resolvers, or a simple dictionary mapping each compound to it's selected SMILES representation.
@@ -583,9 +608,9 @@ def resolve_compounds_to_smiles(
         resolvers_list = [
             PubChemNameResolver("pubchem_default"),
             OpsinNameResolver("opsin_default"),
-            ManualNameResolver("manual_default"),
-            StructuralFormulaNameResolver("structural_formula_default"),
-            InorganicShorthandNameResolver("inorganic_shorthand_default"),
+            # ManualNameResolver("manual_default"),
+            # StructuralFormulaNameResolver("structural_formula_default"),
+            # InorganicShorthandNameResolver("inorganic_shorthand_default"),
         ]
 
     if isinstance(compounds_list, str):
@@ -607,6 +632,11 @@ def resolve_compounds_to_smiles(
     if len(compounds_list) != len(set(compounds_list)):
         logger.warning("Removing duplicate compound names from compounds_list.")
         compounds_list = list(set(compounds_list))
+
+    non_empty_compounds_list = [string for string in compounds_list if string]
+    if len(non_empty_compounds_list) != len(compounds_list):
+        logger.warning("Removing empty compound names from compounds_list.")
+        compounds_list = non_empty_compounds_list
 
     if not isinstance(resolvers_list, list) or len(resolvers_list) == 0:
         raise ValueError(
@@ -641,6 +671,14 @@ def resolve_compounds_to_smiles(
 
     if not isinstance(normalize_unicode, bool):
         raise ValueError("Invalid input: normalize_unicode must be a bool.")
+
+    if not isinstance(internet_connection_available, bool):
+        raise ValueError("Invalid input: internet_connection_available must be a bool.")
+
+    if not internet_connection_available:
+        resolvers_list = [
+            resolver for resolver in resolvers_list if not resolver.requires_internet
+        ]
 
     if normalize_unicode:
         # Clean compound names (strip, remove/replace forbidden characters, etc.) and return a mapping dict
@@ -692,34 +730,39 @@ def resolve_compounds_to_smiles(
     )
 
     if attempt_name_correction:
-        # Attempt to correct compound names and then resolve them again.
+        # Attempt to correct compound names and then attempt to resolve using the corrected names.
         corrected_names_dict = correct_names(
             compounds_out_dict, name_correction_config, resolve_peptide_shorthand
         )
         if corrected_names_dict:
-            corrected_names_dict_list = [
-                ele["selected_name"] for ele in list(corrected_names_dict.values())
-            ]
-            corrected_names_original_names_mapping_dict = {
-                v["selected_name"]: k for k, v in list(corrected_names_dict.items())
-            }
-            corrected_compounds_out_dict = resolve_compounds_to_smiles(
-                compounds_list=corrected_names_dict_list,
-                resolvers_list=resolvers_list,
-                smiles_selection_mode=smiles_selection_mode,
-                detailed_name_dict=True,  # Need detailed name dict
-                batch_size=batch_size,
-                normalize_unicode=normalize_unicode,
-                split_names_to_solve=split_names_to_solve,
-                resolve_peptide_shorthand=False,  # Prevent recursion
-                attempt_name_correction=False,  # Prevent recursion
-            )
-            for k, v in corrected_names_original_names_mapping_dict.items():
-                if k in corrected_compounds_out_dict:
-                    compounds_out_dict[v] = corrected_compounds_out_dict[k]
-                    compounds_out_dict[v]["name_correction_info"] = (
-                        corrected_names_dict[v]
-                    )
+            corrected_pairs: list[tuple[str, str]] = []
+            for original_name, info in corrected_names_dict.items():
+                selected = info.get("selected_name")
+                if isinstance(selected, str) and selected:
+                    corrected_pairs.append((original_name, selected))
+
+            if corrected_pairs:
+                selected_names = [selected for _, selected in corrected_pairs]
+
+                corrected_compounds_out_dict = resolve_compounds_to_smiles(
+                    compounds_list=selected_names,
+                    resolvers_list=resolvers_list,
+                    smiles_selection_mode=smiles_selection_mode,
+                    detailed_name_dict=True,
+                    batch_size=batch_size,
+                    normalize_unicode=normalize_unicode,
+                    split_names_to_solve=split_names_to_solve,
+                    resolve_peptide_shorthand=False,
+                    attempt_name_correction=False,
+                )
+
+                for original_name, selected_name in corrected_pairs:
+                    resolved = corrected_compounds_out_dict.get(selected_name)
+                    if resolved:
+                        compounds_out_dict[original_name] = resolved
+                        compounds_out_dict[original_name]["name_correction_info"] = (
+                            corrected_names_dict[original_name]
+                        )
 
     if not detailed_name_dict:
         return {k: v.get("SMILES", "") for k, v in compounds_out_dict.items()}
