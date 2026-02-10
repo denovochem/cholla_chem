@@ -70,8 +70,12 @@ Many aspects of the name-to-SMILES resolution process can be customized, includi
 
 In this example, we resolve chemical names with OPSIN, PubChem, and CIRPy, and use a custom consensus weighting approach to pick the best SMILES:
 ```pycon
-from cholla_chem import resolve_compounds_to_smiles
-from cholla_chem.name_resolvers import OpsinNameResolver, PubChemNameResolver, CIRpyNameResolver
+from cholla_chem import (
+    OpsinNameResolver,
+    PubChemNameResolver,
+    CIRpyNameResolver,
+    resolve_compounds_to_smiles,
+)
 
 opsin_resolver = OpsinNameResolver(
     resolver_name='opsin', 

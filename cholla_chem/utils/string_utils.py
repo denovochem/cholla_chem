@@ -74,6 +74,7 @@ def remove_tags(string: str) -> str:
 
 
 def cas_check_digit(potential_cas_number: str) -> bool:
+    """Check if a string is a valid CAS number."""
     check_digit = potential_cas_number[-1]
     reversed_remaining_digits = potential_cas_number[::-1][1:]
     total = sum(
@@ -85,6 +86,7 @@ def cas_check_digit(potential_cas_number: str) -> bool:
 
 
 def is_valid_cas(synonym: str) -> bool:
+    """Check if a string is a valid CAS number."""
     synonym = synonym.replace("-", "")
     if not synonym.isdigit():
         return False

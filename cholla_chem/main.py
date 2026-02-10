@@ -1,4 +1,5 @@
 import shutil
+import time
 import warnings
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
@@ -48,7 +49,14 @@ class ChemicalNameResolver(ABC):
     Subclasses must implement the `name_to_smiles` method.
     """
 
-    def __init__(self, resolver_type: str, resolver_name: str, resolver_weight: float):
+    def __init__(
+        self,
+        resolver_type: str,
+        resolver_name: str,
+        resolver_weight: float,
+        requires_internet: bool = False,
+        rate_limit_time: Optional[float] = None,
+    ):
         if not isinstance(resolver_type, str):
             raise TypeError("Invalid input: resolver_type must be a string.")
         self._resolver_type: str = resolver_type
@@ -64,7 +72,8 @@ class ChemicalNameResolver(ABC):
                 "Invalid input: resolver_weight must be a number between 0-1000."
             )
         self._resolver_weight: float = float(resolver_weight)
-        self._requires_internet: bool = False
+        self._requires_internet: bool = requires_internet
+        self._rate_limit_time: Optional[float] = rate_limit_time
 
     @property
     def resolver_name(self) -> str:
@@ -80,6 +89,11 @@ class ChemicalNameResolver(ABC):
     def requires_internet(self) -> bool:
         """Return requires_internet."""
         return self._requires_internet
+
+    @property
+    def rate_limit_time(self) -> Optional[float]:
+        """Return rate_limit_time."""
+        return self._rate_limit_time
 
     @abstractmethod
     def name_to_smiles(
@@ -114,12 +128,17 @@ class OpsinNameResolver(ChemicalNameResolver):
         wildcard_radicals: bool = False,
         jar_fpath: str = "opsin-cli.jar",
     ):
-        super().__init__("opsin", resolver_name, resolver_weight)
+        super().__init__(
+            "opsin",
+            resolver_name,
+            resolver_weight,
+            rate_limit_time=None,
+        )
         self._allow_acid = allow_acid
         self._allow_radicals = allow_radicals
         self._allow_bad_stereo = allow_bad_stereo
         self._wildcard_radicals = wildcard_radicals
-        self._requires_internet = False
+        self._jar_fpath = jar_fpath
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -142,9 +161,19 @@ class PubChemNameResolver(ChemicalNameResolver):
     Resolver using PubChem via PubChemPy.
     """
 
-    def __init__(self, resolver_name: str, resolver_weight: float = 2):
-        super().__init__("pubchem", resolver_name, resolver_weight)
-        self._requires_internet = True
+    def __init__(
+        self,
+        resolver_name: str,
+        resolver_weight: float = 2,
+        rate_limit_time: float = 10,
+    ):
+        super().__init__(
+            "pubchem",
+            resolver_name,
+            resolver_weight,
+            requires_internet=True,
+            rate_limit_time=rate_limit_time,
+        )
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -161,9 +190,19 @@ class CIRpyNameResolver(ChemicalNameResolver):
     Resolver using Chemical Identity Resolver via CIRPy.
     """
 
-    def __init__(self, resolver_name: str, resolver_weight: float = 1):
-        super().__init__("cirpy", resolver_name, resolver_weight)
-        self._requires_internet = True
+    def __init__(
+        self,
+        resolver_name: str,
+        resolver_weight: float = 1,
+        rate_limit_time: float = 10,
+    ):
+        super().__init__(
+            "cirpy",
+            resolver_name,
+            resolver_weight,
+            requires_internet=True,
+            rate_limit_time=rate_limit_time,
+        )
 
     def name_to_smiles(
         self, compound_name_list: List[str]
@@ -181,9 +220,19 @@ class ChemSpiPyResolver(ChemicalNameResolver):
     """
 
     def __init__(
-        self, resolver_name: str, chemspider_api_key: str, resolver_weight: float = 3
+        self,
+        resolver_name: str,
+        chemspider_api_key: str,
+        resolver_weight: float = 3,
+        rate_limit_time: float = 10,
     ):
-        super().__init__("cirpy", resolver_name, resolver_weight)
+        super().__init__(
+            "chemspipy",
+            resolver_name,
+            resolver_weight,
+            requires_internet=True,
+            rate_limit_time=rate_limit_time,
+        )
         if chemspider_api_key:
             if not isinstance(chemspider_api_key, str):
                 raise TypeError("Invalid input: chemspider_api_key must be a string.")
@@ -214,7 +263,13 @@ class ManualNameResolver(ChemicalNameResolver):
         provided_name_dict: dict | None = None,
         resolver_weight: float = 10,
     ):
-        super().__init__("manual", resolver_name, resolver_weight)
+        super().__init__(
+            "manual",
+            resolver_name,
+            resolver_weight,
+            requires_internet=False,
+            rate_limit_time=None,
+        )
         if provided_name_dict:
             if not isinstance(provided_name_dict, dict):
                 raise TypeError(
@@ -248,8 +303,18 @@ class StructuralFormulaNameResolver(ChemicalNameResolver):
     Resolver using structural chemical formula (e.g. CH3CH2CH2COOH).
     """
 
-    def __init__(self, resolver_name: str, resolver_weight: float = 2):
-        super().__init__("structural_formula", resolver_name, resolver_weight)
+    def __init__(
+        self,
+        resolver_name: str,
+        resolver_weight: float = 2,
+    ):
+        super().__init__(
+            "structural_formula",
+            resolver_name,
+            resolver_weight,
+            requires_internet=False,
+            rate_limit_time=None,
+        )
         self._requires_internet = False
 
     def name_to_smiles(
@@ -267,8 +332,18 @@ class InorganicShorthandNameResolver(ChemicalNameResolver):
     Resolver using inorganic shorthand (e.g. [Cp*RhCl2]2).
     """
 
-    def __init__(self, resolver_name: str, resolver_weight: float = 2):
-        super().__init__("inorganic_shorthand", resolver_name, resolver_weight)
+    def __init__(
+        self,
+        resolver_name: str,
+        resolver_weight: float = 2,
+    ):
+        super().__init__(
+            "inorganic_shorthand",
+            resolver_name,
+            resolver_weight,
+            requires_internet=False,
+            rate_limit_time=None,
+        )
         self._requires_internet = False
 
     def name_to_smiles(
@@ -382,11 +457,12 @@ def resolve_compounds_using_resolvers(
         out = {}
         info_messages = {}
         for i in range(0, len(compounds_list), batch_size):
-            print(resolver, i)
             chunk = compounds_list[i : i + batch_size]
             out_chunk, info_messages_chunk = resolver.name_to_smiles(chunk)
             out.update(out_chunk)
             info_messages.update(info_messages_chunk)
+            if resolver.rate_limit_time:
+                time.sleep(resolver.rate_limit_time)
         resolvers_out_dict[resolver.resolver_name] = {
             "out": out,
             "info_messages": info_messages,
@@ -608,9 +684,9 @@ def resolve_compounds_to_smiles(
         resolvers_list = [
             PubChemNameResolver("pubchem_default"),
             OpsinNameResolver("opsin_default"),
-            # ManualNameResolver("manual_default"),
-            # StructuralFormulaNameResolver("structural_formula_default"),
-            # InorganicShorthandNameResolver("inorganic_shorthand_default"),
+            ManualNameResolver("manual_default"),
+            StructuralFormulaNameResolver("structural_formula_default"),
+            InorganicShorthandNameResolver("inorganic_shorthand_default"),
         ]
 
     if isinstance(compounds_list, str):
