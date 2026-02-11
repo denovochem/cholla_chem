@@ -45,5 +45,8 @@ def name_to_smiles_chemspipy(
         except requests.exceptions.RequestException as err:
             logger.warning(f"Request error in ChemSpiPy query: {err}")
             continue
+        except Exception as e:
+            logger.warning(f"Unexpected error in ChemSpiPy query: {e}")
+            continue
 
     return chemspipy_name_dict
