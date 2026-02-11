@@ -38,5 +38,4 @@ def name_to_smiles_cirpy(compound_name_list: List[str]) -> Dict[str, str]:
     cirpy_name_dict = {}
     for compound_name in compound_name_list:
         cirpy_name_dict[compound_name] = retrieve_cirpy_results(compound_name)
-        cirpy_name_dict[compound_name] = ""
     return cirpy_name_dict
