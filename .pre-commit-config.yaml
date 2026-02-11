@@ -35,6 +35,7 @@ repos:
         language: python
         additional_dependencies:
           - pytest
+          - .
         pass_filenames: false
         types: [python]
         stages: [pre-push]
