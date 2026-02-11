@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 import pubchempy as pcp
+import requests
 
 from cholla_chem.utils.logging_config import logger
 from cholla_chem.utils.string_utils import filter_latin1_compatible
@@ -21,7 +22,15 @@ def name_to_smiles_pubchem(compound_name_list: List[str]) -> Dict[str, str]:
     if not filtered_compound_name_list:
         return {}
 
-    pubchem_compounds = pcp.get_compounds(filtered_compound_name_list, "name")
+    try:
+        pubchem_compounds = pcp.get_compounds(filtered_compound_name_list, "name")
+    except requests.exceptions.HTTPError as http_err:
+        logger.warning(f"HTTP error in PubChem query: {http_err}")
+        return {}
+    except requests.exceptions.RequestException as err:
+        logger.warning(f"Request error in PubChem query: {err}")
+        return {}
+
     pubchem_name_dict = {
         k: v.smiles if v is not None else ""
         for k, v in zip(filtered_compound_name_list, pubchem_compounds)
@@ -33,8 +42,6 @@ def name_to_smiles_pubchem(compound_name_list: List[str]) -> Dict[str, str]:
             f"filtered_compound_name_list ({len(filtered_compound_name_list)}), "
             f"pubchem_name_dict ({len(pubchem_name_dict)})"
         )
-        print(filtered_compound_name_list)
-        print([ele.smiles if ele else "" for ele in pubchem_compounds])
         return {}
 
     return pubchem_name_dict

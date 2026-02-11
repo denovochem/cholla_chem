@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+import requests
 from chemspipy import ChemSpider
 
 from cholla_chem.utils.logging_config import logger
@@ -28,14 +29,21 @@ def name_to_smiles_chemspipy(
 
     chemspipy_name_dict = {}
     for compound_name in filter_latin1_compatible(compound_name_list):
-        results = cs.search(compound_name)
-        results.wait()
-        results.ready()
-        if len(results) == 0:
+        try:
+            results = cs.search(compound_name)
+            results.wait()
+            results.ready()
+            if len(results) == 0:
+                continue
+            c = results[0]
+            if not c.smiles:
+                continue
+            chemspipy_name_dict[compound_name] = c.smiles
+        except requests.exceptions.HTTPError as http_err:
+            logger.warning(f"HTTP error in ChemSpiPy query: {http_err}")
             continue
-        c = results[0]
-        if not c.smiles:
+        except requests.exceptions.RequestException as err:
+            logger.warning(f"Request error in ChemSpiPy query: {err}")
             continue
-        chemspipy_name_dict[compound_name] = c.smiles
 
     return chemspipy_name_dict

@@ -1,15 +1,17 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 import re
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver_tokens import (
     COUNTER_ION_DATABASE,
     LIGAND_DATABASE,
-    LigandInfo,
     METAL_DATABASE,
+    LigandInfo,
     MetalInfo,
 )
+
 # from cholla_chem.utils.logging_config import logger
 
 
@@ -330,7 +332,6 @@ class ComplexNameParser:
                     i = new_i
                 else:
                     raise ParserError(f"could not match known ligand: {ligand_str}")
-                    # print('WHAT')
                     # # Extract unknown token
                     # token, new_i = self._extract_unknown_token(ligand_str, i)
                     # if token:
