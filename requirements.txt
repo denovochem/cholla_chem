@@ -4,5 +4,6 @@ chemspipy ~=2.0.0
 rdkit >=2025.9.3
 levenshtein
 flashtext
+requests
 py2opsin @ git+https://github.com/denovochem/py2opsin.git
 PubChemPy @ git+https://github.com/denovochem/PubChemPy.git

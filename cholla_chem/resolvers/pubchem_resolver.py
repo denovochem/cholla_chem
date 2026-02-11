@@ -30,6 +30,9 @@ def name_to_smiles_pubchem(compound_name_list: List[str]) -> Dict[str, str]:
     except requests.exceptions.RequestException as err:
         logger.warning(f"Request error in PubChem query: {err}")
         return {}
+    except Exception as e:
+        logger.warning(f"Unexpected error in PubChem query: {e}")
+        return {}
 
     pubchem_name_dict = {
         k: v.smiles if v is not None else ""

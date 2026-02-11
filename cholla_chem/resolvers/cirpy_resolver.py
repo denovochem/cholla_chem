@@ -1,7 +1,6 @@
 from typing import Dict, List
 
 import cirpy
-import requests
 
 from cholla_chem.utils.logging_config import logger
 
@@ -38,13 +37,5 @@ def name_to_smiles_cirpy(compound_name_list: List[str]) -> Dict[str, str]:
     """
     cirpy_name_dict = {}
     for compound_name in compound_name_list:
-        try:
-            cirpy_name_dict[compound_name] = retrieve_cirpy_results(compound_name)
-            cirpy_name_dict[compound_name] = ""
-        except requests.exceptions.HTTPError as http_err:
-            logger.warning(f"HTTP error in CIRpy query: {http_err}")
-            continue
-        except requests.exceptions.RequestException as err:
-            logger.warning(f"Request error in CIRpy query: {err}")
-            continue
+        cirpy_name_dict[compound_name] = retrieve_cirpy_results(compound_name)
     return cirpy_name_dict
