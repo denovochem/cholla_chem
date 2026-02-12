@@ -37,6 +37,8 @@ repos:
           - pytest
           - rdkit
           - flashtext
+          - loguru
+          - levenshtein
           - .
         pass_filenames: false
         types: [python]
