@@ -35,10 +35,13 @@ repos:
         language: python
         additional_dependencies:
           - pytest
-          - rdkit
-          - flashtext
-          - loguru
-          - levenshtein
+          - "loguru~=0.7.0"
+          - "cirpy~=1.0.0"
+          - "chemspipy~=2.0.0"
+          - "requests"
+          - "flashtext"
+          - "py2opsin @ git+https://github.com/denovochem/py2opsin.git"
+          - "PubChemPy @ git+https://github.com/denovochem/PubChemPy.git"
           - .
         pass_filenames: false
         types: [python]
