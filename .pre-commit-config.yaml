@@ -36,6 +36,7 @@ repos:
         additional_dependencies:
           - pytest
           - rdkit
+          - flashtext
           - .
         pass_filenames: false
         types: [python]
