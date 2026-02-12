@@ -35,7 +35,7 @@ repos:
         language: python
         additional_dependencies:
           - pytest
-          - -rrequirements.txt
+          - rdkit
           - .
         pass_filenames: false
         types: [python]
