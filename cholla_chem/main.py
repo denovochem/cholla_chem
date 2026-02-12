@@ -30,10 +30,7 @@ from cholla_chem.resolvers.strutural_formula_resolver.structural_formula_resolve
 )
 from cholla_chem.smiles_selector import SMILESSelector
 from cholla_chem.utils.chem_utils import canonicalize_smiles
-from cholla_chem.utils.logging_config import configure_logging, logger
-
-# Configure loguru logging
-configure_logging(level="WARNING")
+from cholla_chem.utils.logging_config import logger
 
 # Ignore all RuntimeWarnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)

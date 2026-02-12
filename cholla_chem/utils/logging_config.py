@@ -32,23 +32,10 @@ LOG_LEVELS = {
     "default": "WARNING",
 }
 
-# Default log directory - using absolute path to project root
-PROJECT_ROOT = Path(__file__).parent.parent.parent  # Go up three dirs
-LOG_DIR = PROJECT_ROOT / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
-
-# Default log files
-LOG_FILE = LOG_DIR / "info.log"
-ERROR_LOG_FILE = LOG_DIR / "errors.log"
-
-LOG_FILE.touch()
-ERROR_LOG_FILE.touch()
-
 
 def configure_logging(
     level: str | None = None,
-    log_file: Path = LOG_FILE,
-    error_log_file: Path = ERROR_LOG_FILE,
+    log_dir: Path | None = None,
     rotation: str = "10 MB",
     retention: str = "30 days",
     serialize: bool = False,
@@ -59,18 +46,21 @@ def configure_logging(
 
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Path to the main log file
-        error_log_file: Path to the error log file
+        log_dir: Directory to store log files
         rotation: Log rotation configuration (e.g., "10 MB", "1 week")
         retention: Log retention period (e.g., "30 days")
         serialize: Whether to serialize log records as JSON
         **kwargs: Additional arguments to pass to logger.add()
     """
-    # Ensure log directory exists
-    if log_file:
+    log_file: Path | None = None
+    error_log_file: Path | None = None
+    if log_dir:
+        log_file = log_dir / "cholla_chem.log"
+        error_log_file = log_dir / "cholla_chem_errors.log"
+
         log_file.parent.mkdir(parents=True, exist_ok=True)
         log_file.touch()
-    if error_log_file:
+
         error_log_file.parent.mkdir(parents=True, exist_ok=True)
         error_log_file.touch()
 
