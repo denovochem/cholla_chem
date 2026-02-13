@@ -43,3 +43,6 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[project.scripts]
+cholla-chem = "cholla_chem.cli:main"
