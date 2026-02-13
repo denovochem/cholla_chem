@@ -19,7 +19,7 @@ def retrieve_cirpy_results(compound_name: str) -> str:
         smiles = cirpy.resolve(compound_name, "smiles")
 
     except Exception as e:
-        logger.warning(f"Exception in CIRpy query: {str(e)}")
+        logger.warning(f"Exception with CIRpy query: {str(e)}")
         return ""
 
     return smiles
@@ -37,5 +37,7 @@ def name_to_smiles_cirpy(compound_name_list: List[str]) -> Dict[str, str]:
     """
     cirpy_name_dict = {}
     for compound_name in compound_name_list:
-        cirpy_name_dict[compound_name] = retrieve_cirpy_results(compound_name)
+        result = retrieve_cirpy_results(compound_name)
+        if result:
+            cirpy_name_dict[compound_name] = result
     return cirpy_name_dict

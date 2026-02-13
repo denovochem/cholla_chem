@@ -379,7 +379,7 @@ def remove_opsin_if_no_java(
     """
     has_opsin = any(isinstance(r, OpsinNameResolver) for r in resolvers_list)
     if has_opsin and not java_available():
-        logger.info("Java not found, removing OPSIN resolver")
+        logger.warning("Java not found, not using OPSIN resolver")
         resolvers_list = [
             r for r in resolvers_list if not isinstance(r, OpsinNameResolver)
         ]
@@ -703,12 +703,12 @@ def resolve_compounds_to_smiles(
                     "Invalid input: compounds_list must be a string or a non-empty list of strings."
                 )
     if len(compounds_list) != len(set(compounds_list)):
-        logger.warning("Removing duplicate compound names from compounds_list.")
+        logger.info("Removing duplicate compound names from compounds_list.")
         compounds_list = list(set(compounds_list))
 
     non_empty_compounds_list = [string for string in compounds_list if string]
     if len(non_empty_compounds_list) != len(compounds_list):
-        logger.warning("Removing empty compound names from compounds_list.")
+        logger.info("Removing empty compound names from compounds_list.")
         compounds_list = non_empty_compounds_list
 
     if not isinstance(resolvers_list, list) or len(resolvers_list) == 0:
@@ -749,11 +749,15 @@ def resolve_compounds_to_smiles(
         raise ValueError("Invalid input: internet_connection_available must be a bool.")
 
     if not internet_connection_available:
+        logger.info(
+            "Internet connection not available, filtering out internet-dependent resolvers."
+        )
         resolvers_list = [
             resolver for resolver in resolvers_list if not resolver.requires_internet
         ]
 
     if normalize_unicode:
+        logger.info("Normalizing unicode in compound names.")
         # Clean compound names (strip, remove/replace forbidden characters, etc.) and return a mapping dict
         cleaned_compounds_list, cleaned_compounds_dict = (
             normalize_unicode_and_return_mapping(compounds_list)
@@ -838,6 +842,7 @@ def resolve_compounds_to_smiles(
                         )
 
     if not detailed_name_dict:
+        logger.info("Returning simplified SMILES dictionary.")
         return {k: v.get("SMILES", "") for k, v in compounds_out_dict.items()}
 
     return compounds_out_dict

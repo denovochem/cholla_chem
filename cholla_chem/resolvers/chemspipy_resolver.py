@@ -1,6 +1,5 @@
 from typing import Dict, List
 
-import requests
 from chemspipy import ChemSpider
 
 from cholla_chem.utils.logging_config import logger
@@ -39,14 +38,8 @@ def name_to_smiles_chemspipy(
             if not c.smiles:
                 continue
             chemspipy_name_dict[compound_name] = c.smiles
-        except requests.exceptions.HTTPError as http_err:
-            logger.warning(f"HTTP error in ChemSpiPy query: {http_err}")
-            continue
-        except requests.exceptions.RequestException as err:
-            logger.warning(f"Request error in ChemSpiPy query: {err}")
-            continue
         except Exception as e:
-            logger.warning(f"Unexpected error in ChemSpiPy query: {e}")
+            logger.warning(f"Error with ChemSpiPy query: {e}")
             continue
 
     return chemspipy_name_dict

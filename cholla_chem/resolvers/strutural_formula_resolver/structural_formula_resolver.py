@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -7,7 +8,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from rdkit import Chem
 
 from cholla_chem.utils.logging_config import logger
-
 
 # =============================================================================
 # CONSTANTS AND ELEMENT DATA
@@ -683,7 +683,7 @@ class StructuralFormulaParser:
             return None
         except Exception as e:
             self.errors.append(f"Parsing error: {e}")
-            logger.exception("Unexpected parsing error")
+            logger.warning("Unexpected parsing error")
             return None
 
     # -------------------------------------------------------------------------
