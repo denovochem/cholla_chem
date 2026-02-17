@@ -1,4 +1,4 @@
-# ChollaChem
+# cholla_chem
 [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.python.org/pypi/PubChemPy)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
@@ -30,7 +30,7 @@ When resolvers disagree on the SMILES for a given compound, a variety of SMILES 
 
 ## Installation
 
-Install ChollaChem with pip directly from this repo:
+Install cholla_chem with pip directly from this repo:
 
 ```shell
 pip install git+https://github.com/denovochem/cholla_chem.git
@@ -119,4 +119,4 @@ Full documentation is availible [here](https://denovochem.github.io/cholla_chem/
 
 ## License
 
-ChollaChem is licensed under the [MIT license](https://github.com/denovochem/cholla_chem/blob/main/LICENSE).
+cholla_chem is licensed under the [MIT license](https://github.com/denovochem/cholla_chem/blob/main/LICENSE).
