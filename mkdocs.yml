@@ -1,4 +1,4 @@
-site_name: ChollaChem
+site_name: cholla_chem
 site_description: Convert chemical names to SMILES
 repo_url: https://github.com/denovochem/cholla_chem
 repo_name: denovochem/cholla_chem
@@ -30,6 +30,7 @@ nav:
   - Resolvers: resolvers.md
   - Smiles Selection: smiles_selection.md
   - Name Correction/Editing: name_manipulation.md
+  - CLI: cli.md
   - Contributing: contributing.md
   - API Reference: reference.md
 

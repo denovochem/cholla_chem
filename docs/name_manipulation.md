@@ -1,6 +1,6 @@
 # Name manipulation
 
-This package contains utilities that automatically attempt to transform or correct input names if the initial name-to-SMILES conversion fails. At the moment there are two major capabilities:
+This package contains utilities that automatically attempt to transform or correct input names if the initial name-to-SMILES conversion fails. At the moment there are three major capabilities:
 
 - Splitting on delimiters (e.g. 'BH3•THF' → 'BH3' and 'THF')
 - Peptide shorthand expansion (e.g. `Boc-Ala-Gly-OMe` → `tert-butoxycarbonyl-l-alanyl-glycine methyl ester`)
