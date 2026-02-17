@@ -30,7 +30,7 @@ nav:
   - Resolvers: resolvers.md
   - Smiles Selection: smiles_selection.md
   - Name Correction/Editing: name_manipulation.md
-  - CLI: cli.md
+  - Command Line Interface: cli.md
   - Contributing: contributing.md
   - API Reference: reference.md
 

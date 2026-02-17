@@ -1,31 +1,22 @@
 ## Basic CLI usage:
 cholla-chem resolves one or more chemical names to SMILES from the command line. You can pass names directly as positional arguments, or provide an input text file with one name per line.
 
-<br>
-
 Resolve a chemical name:
 
 ```cholla-chem aspirin ```
-
-<br>
 
 Resolve multiple chemical names:
 
 ```cholla-chem aspirin "2-acetyloxybenzoic acid" "NaH" ```
 
-<br>
-
 Read names from a file (one per line):
 
 ```cholla-chem --input names.txt ```
-
-<br>
 
 Write tab-separated output (name<TAB>smiles) to a file instead of stdout:
 
 ```cholla-chem --input names.txt --output results.tsv ```
 
-<br>
 <br>
 
 ## Options:
