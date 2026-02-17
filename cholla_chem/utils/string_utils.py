@@ -2,6 +2,7 @@ import re
 from typing import Dict, List
 
 from cholla_chem.utils.constants import (
+    ALLOWED_CHARS_WHITELIST,
     COMMON_CHARS_WHITELIST,
     NON_LATIN1_REPLACEMENTS,
 )
@@ -35,20 +36,21 @@ def clean_strings(
     string: str, chars_to_replace_dict: Dict[str, str] = NON_LATIN1_REPLACEMENTS
 ) -> str:
     """
-    Removes specified characters from a string.
+    Replaces specified characters in a string.
 
     Args:
         string: The input string.
-        chars_to_remove: A list (or string or set) of characters to remove.
+        chars_to_replace_dict: A dictionary of characters to replace.
 
     Returns:
-        The cleaned string with the specified characters removed.
+        The cleaned string with the specified characters replaced.
     """
     # sort longest to shortest to avoid partial replacements
     for char in sorted(chars_to_replace_dict, key=len, reverse=True):
         string = string.replace(char, chars_to_replace_dict[char])
     string = string.replace("\n", "")
     string = remove_tags(string)
+    string = "".join(char for char in string if char in ALLOWED_CHARS_WHITELIST)
     return string
 
 

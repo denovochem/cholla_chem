@@ -370,6 +370,7 @@ NON_LATIN1_REPLACEMENTS = {
     # Greek letters
     "α": "alpha",
     "β": "beta",
+    "ß": "beta",
     "γ": "gamma",
     "δ": "delta",
     "ε": "epsilon",
@@ -380,6 +381,7 @@ NON_LATIN1_REPLACEMENTS = {
     "κ": "kappa",
     "λ": "lambda",
     "μ": "mu",
+    "µ": "mu",  # Do not remove - this mu is different from the previous!?
     "ν": "nu",
     "ξ": "xi",
     "ο": "omicron",
@@ -431,7 +433,10 @@ NON_LATIN1_REPLACEMENTS = {
     "Å": "A",
     "’": "'",
     "′": "'",
+    "´": "'",
     "″": '"',
+    "“": '"',
+    "”": '"',
     "®": "",
     "™": "",
     "•": ".",
@@ -440,6 +445,10 @@ NON_LATIN1_REPLACEMENTS = {
     "ü": "u",
     "ø": "o",
     "ö": "o",
+    "?": "",
+    "%": "",
+    "≤": "<=",
+    "≥": ">=",
     # Non standard spaces
     "\u00a0": " ",
     "\u2002": " ",
@@ -448,10 +457,22 @@ NON_LATIN1_REPLACEMENTS = {
     "\u200a": " ",
     "\u200b": "",
     # Encoding errors from utf-8 to windows-1252
+    "â\x81°": "0",
     "Â¹": "1",
     "Â²": "2",
     "Â³": "3",
+    "â\x81´": "4",
+    "â\x81µ": "5",
+    "â\x81¶": "6",
+    "â\x81·": "7",
+    "â\x81¸": "8",
+    "â\x81¹": "9",
+    "â\x81º": "+",
+    "â\x81»": "-",
+    "â\x81½": "(",
+    "â\x81¾": ")",
     "â‚€": "0",
+    "â‚\x81": "1",
     "â‚‚": "2",
     "â‚ƒ": "3",
     "â‚„": "4",
@@ -462,9 +483,11 @@ NON_LATIN1_REPLACEMENTS = {
     "â‚‰": "9",
     "â‚Š": "+",
     "â‚‹": "-",
+    "â‚\x8d": "(",
     "â‚Ž": ")",
     "Î±": "alpha",
     "Î²": "beta",
+    "ÃŸ": "beta",
     "Î³": "gamma",
     "Î´": "delta",
     "Îµ": "epsilon",
@@ -475,10 +498,12 @@ NON_LATIN1_REPLACEMENTS = {
     "Îº": "kappa",
     "Î»": "lambda",
     "Î¼": "mu",
+    "Âµ": "mu",
     "Î½": "nu",
     "Î¾": "xi",
     "Î¿": "omicron",
     "Ï€": "pi",
+    "Ï\x81": "rho",
     "Ïƒ": "sigma",
     "Ï„": "tau",
     "Ï…": "upsilon",
@@ -498,6 +523,7 @@ NON_LATIN1_REPLACEMENTS = {
     "Îš": "Kappa",
     "Î›": "Lambda",
     "Îœ": "Mu",
+    "Î\x9d": "Nu",
     "Îž": "Xi",
     "ÎŸ": "Omicron",
     "Î\xa0": "Pi",
@@ -514,14 +540,19 @@ NON_LATIN1_REPLACEMENTS = {
     "âˆ’": "-",
     "â€“": "-",
     "â€”": "-",
+    "â€\x90": "-",
     "â€‘": "-",
+    "â\x81ƒ": "-",
     "ï¹£": "-",
+    "ï¼\x8d": "-",
     "Â°": "",
     "Ã…": "A",
-    "â€\x90": "-",  # needs the extra byte at the end?
     "â€™": "'",
     "â€²": "'",
+    "Â´": "'",
     "â€³": '"',
+    "â€œ": '"',
+    "â€\x9d": '"',
     "Â®": "",
     "â„¢": "",
     "â€¢": ".",
@@ -530,6 +561,10 @@ NON_LATIN1_REPLACEMENTS = {
     "Ã¼": "u",
     "Ã¸": "o",
     "Ã¶": "o",
+    "?": "",
+    "%": "",
+    "â‰¤": "<=",
+    "â‰¥": ">=",
     "Â\xa0": " ",
     "â€‚": " ",
     "â€ƒ": " ",
@@ -646,6 +681,16 @@ NON_LATIN1_REPLACEMENTS = {
 
 COMMON_CHARS_WHITELIST = list(
     string.ascii_letters + string.digits + string.punctuation + " "
+)
+
+ALLOWED_CHARS_WHITELIST = list(
+    set(
+        string.ascii_letters
+        + string.digits
+        + string.punctuation
+        + " "
+        + "".join(list(NON_LATIN1_REPLACEMENTS.values()))
+    )
 )
 
 OCR_SUBSTITUTIONS = {
