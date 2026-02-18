@@ -15,7 +15,7 @@ Split chemical names on common delimiters and then solve each component separate
 ```pycon
 from cholla_chem import resolve_compounds_to_smiles
 
-resolved_smiles = resolve_compounds_to_smiles(['BH3•THF'], split_names_to_solve=True)
+resolved_smiles = resolve_compounds_to_smiles(compounds_list=['BH3•THF'], split_names_to_solve=True)
 
 "{'BH3•THF': 'B.C1CCOC1'}"
 ```
@@ -32,7 +32,7 @@ Applied when a chemical name looks like peptide shorthand, typically containing 
 ```pycon
 from cholla_chem import resolve_compounds_to_smiles
 
-resolved_smiles = resolve_compounds_to_smiles(['cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)'], resolve_peptide_shorthand=True)
+resolved_smiles = resolve_compounds_to_smiles(compounds_list=['cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)'], resolve_peptide_shorthand=True)
 
 "{'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)': 'BN1[C@@H](CC(=O)O)C(=O)N[C@@H](CCCNC(N)=N)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CC2=CC=C(C=C2)O)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CC2=CNC=N2)C(=O)N2[C@@H](CCC2)C(=O)N[C@@H](CC2=CC=CC=C2)C1=O'}"
 ```
@@ -50,7 +50,7 @@ Applied when a chemical name looks like it might have OCR/typo artifacts, with v
 ```pycon
 from cholla_chem import resolve_compounds_to_smiles
 
-resolved_smiles = resolve_compounds_to_smiles(['l-mercapto-Z-thiapropane'], attempt_name_correction=True)
+resolved_smiles = resolve_compounds_to_smiles(compounds_list=['l-mercapto-Z-thiapropane'], attempt_name_correction=True)
 
 "{'l-mercapto-Z-thiapropane': 'SCSC'}"
 ```

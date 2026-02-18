@@ -53,8 +53,8 @@ cirpy_resolver = CIRpyNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['2-acetyloxybenzoic acid'],
-    [opsin_resolver, pubchem_resolver, cirpy_resolver],
+    compounds_list=['2-acetyloxybenzoic acid'],
+    resolvers_list=[opsin_resolver, pubchem_resolver, cirpy_resolver],
     smiles_selection_mode='weighted',
     detailed_name_dict=True
 )

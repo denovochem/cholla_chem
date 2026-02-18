@@ -41,7 +41,7 @@
 !cholla_chem/main.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/cli.py
-!cholla_chem/datatypes.py
+!cholla_chem/dataclasses.py
 !cholla_chem/name_manipulation/
 !cholla_chem/name_manipulation/__init__.py
 !cholla_chem/name_manipulation/manipulate_names.py
@@ -76,6 +76,7 @@
 !cholla_chem/utils/constants.py
 !cholla_chem/utils/logging_config.py
 !cholla_chem/utils/string_utils.py
+!cholla_chem/utils/file_utils.py
 
 # Tests
 !tests/

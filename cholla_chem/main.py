@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from rdkit import RDLogger
 
-from cholla_chem.datatypes import (
+from cholla_chem.dataclasses import (
     CompoundResolutionEntry,
     CompoundResolutionEntryWithNameCorrection,
 )

@@ -21,7 +21,7 @@ See detailed information including which resolver returned which SMILES with det
 from cholla_chem import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['2-acetyloxybenzoic acid'], 
+    compounds_list=['2-acetyloxybenzoic acid'], 
     detailed_name_dict=True
 )
 

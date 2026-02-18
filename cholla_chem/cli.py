@@ -1,116 +1,17 @@
 import argparse
-import csv
-import json
-from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Optional, Sequence
 
 from cholla_chem.main import resolve_compounds_to_smiles
-
-
-def _infer_input_format(path: str) -> str:
-    ext = Path(path).suffix.lower()
-    if ext == ".csv":
-        return "csv"
-    if ext == ".tsv":
-        return "tsv"
-    if ext == ".smi":
-        return "smi"
-    return "txt"
-
-
-def _infer_output_format(path: str) -> str:
-    ext = Path(path).suffix.lower()
-    if ext == ".json":
-        return "json"
-    if ext == ".csv":
-        return "csv"
-    if ext == ".tsv":
-        return "tsv"
-    raise ValueError(f"Unsupported output extension: {ext} (use .json, .csv, .tsv)")
-
-
-def read_names_from_file(
-    path: str,
-    *,
-    input_format: str | None = None,
-    input_column: str = "name",
-    encoding: str = "utf-8",
-) -> List[str]:
-    fmt = (input_format or _infer_input_format(path)).lower()
-
-    if fmt == "txt":
-        with open(path, "r", encoding=encoding, newline="") as f:
-            return [line.strip() for line in f if line.strip()]
-
-    out: List[str] = []
-
-    if fmt in ("csv", "tsv"):
-        delimiter = "," if fmt == "csv" else "\t"
-        with open(path, "r", encoding=encoding, newline="") as f:
-            reader = csv.DictReader(f, delimiter=delimiter)
-            if not reader.fieldnames:
-                raise ValueError(
-                    f"{path} has no header row; expected a column like '{input_column}'"
-                )
-            if input_column not in reader.fieldnames:
-                raise ValueError(
-                    f"{path} is missing column '{input_column}'. Columns: {reader.fieldnames}"
-                )
-            for row in reader:
-                val = (row.get(input_column) or "").strip()
-                if val:
-                    out.append(val)
-            return out
-
-    if fmt == "smi":
-        with open(path, "r", encoding=encoding, newline="") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                parts = line.split()
-                if len(parts) >= 2:
-                    out.append(" ".join(parts[1:]).strip())
-                else:
-                    out.append(parts[0])
-        return out
-
-    raise ValueError(f"Unsupported input format: {fmt} (use txt, csv, tsv, smi)")
-
-
-def write_results(
-    results: Dict,
-    *,
-    output_path: str | None,
-    output_format: str | None = None,
-    encoding: str = "utf-8",
-) -> None:
-    if not output_path:
-        out_text = "\n".join(f"{k}\t{v}" for k, v in results.items())
-        print(out_text)
-        return
-
-    fmt = (output_format or _infer_output_format(output_path)).lower()
-
-    if fmt == "json":
-        with open(output_path, "w", encoding=encoding) as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
-            f.write("\n")
-        return
-
-    if fmt in ("csv", "tsv"):
-        delimiter = "," if fmt == "csv" else "\t"
-        with open(output_path, "w", encoding=encoding, newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["name", "smiles"], delimiter=delimiter)
-            w.writeheader()
-            for name, smiles in results.items():
-                w.writerow({"name": name, "smiles": smiles})
-        return
-
-    raise ValueError(f"Unsupported output format: {fmt}")
+from cholla_chem.utils.file_utils import read_names_from_file, write_results
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """
+    Build a parser for the CLI.
+
+    Returns:
+        argparse.ArgumentParser: A parser object
+    """
     p = argparse.ArgumentParser(prog="cholla-chem")
     p.add_argument("names", nargs="*", type=str, help="Chemical names to resolve")
     p.add_argument("--input", "-i", type=str, help="Text file with one name per line")
@@ -118,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--input-format",
         type=str,
         default=None,
-        choices=["txt", "csv", "tsv", "smi"],
+        choices=["txt", "csv", "tsv"],
         help="Optional override for input format (otherwise inferred from file extension)",
     )
     p.add_argument(
@@ -134,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-format",
         type=str,
         default=None,
-        choices=["json", "csv", "tsv"],
+        choices=["json", "csv", "tsv", "smi", "txt"],
         help="Optional override for output format (otherwise inferred from output file extension)",
     )
     p.add_argument(
@@ -184,6 +85,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    """
+    Main entry point for the CLI.
+
+    Resolve compound names to SMILES strings.
+
+    Args:
+        argv: Optional sequence of command-line arguments
+
+    Returns:
+        int: Exit code (0 for success, non-zero for failure)
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -199,6 +111,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if not names:
         parser.error("Provide names as arguments or via --input")
+
+    if args.output_format != "json" and args.detailed_name_dict:
+        parser.error("--detailed-name-dict can only be used with JSON output format")
 
     results = resolve_compounds_to_smiles(
         names,
