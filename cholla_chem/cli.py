@@ -8,6 +8,17 @@ from cholla_chem.main import resolve_compounds_to_smiles
 
 
 def _infer_input_format(path: str) -> str:
+    """
+    Infer the input format of a file from its extension.
+
+    Supported formats are CSV, TSV, and SMI.
+
+    Args:
+        path: Path to the file
+
+    Returns:
+        str: One of "csv", "tsv", "smi", or "txt"
+    """
     ext = Path(path).suffix.lower()
     if ext == ".csv":
         return "csv"
@@ -19,6 +30,20 @@ def _infer_input_format(path: str) -> str:
 
 
 def _infer_output_format(path: str) -> str:
+    """
+    Infer the output format of a file from its extension.
+
+    Supported formats are JSON, CSV, and TSV.
+
+    Args:
+        path: Path to the file
+
+    Returns:
+        str: One of "json", "csv", "tsv"
+
+    Raises:
+        ValueError: If the extension is not recognized
+    """
     ext = Path(path).suffix.lower()
     if ext == ".json":
         return "json"
@@ -36,6 +61,27 @@ def read_names_from_file(
     input_column: str = "name",
     encoding: str = "utf-8",
 ) -> List[str]:
+    """
+    Reads a list of chemical names from a file.
+
+    Supports the following input formats:
+    - txt: a plain text file with one name per line
+    - csv: a comma-separated value file with a header row
+        containing a column like "name"
+    - tsv: a tab-separated value file with a header row
+        containing a column like "name"
+    - smi: a SMILES file with optional names in the format
+        "SMILES name"
+
+    Args:
+        path: Path to the file
+        input_format: Optional format of the file (txt, csv, tsv, smi)
+        input_column: Name of the column containing the names (default: "name")
+        encoding: Encoding of the file (default: "utf-8")
+
+    Returns:
+        List[str]: A list of chemical names read from the file
+    """
     fmt = (input_format or _infer_input_format(path)).lower()
 
     if fmt == "txt":
@@ -85,6 +131,18 @@ def write_results(
     output_format: str | None = None,
     encoding: str = "utf-8",
 ) -> None:
+    """
+    Write results of chemical name resolution to a file.
+
+    Args:
+        results: A dictionary mapping compound names to their SMILES representations.
+        output_path: The path to the output file. If not provided, print results to stdout.
+        output_format: The format of the output file. Supported formats are json, csv, tsv.
+        encoding: The encoding of the output file. Default is utf-8.
+
+    Returns:
+        None
+    """
     if not output_path:
         out_text = "\n".join(f"{k}\t{v}" for k, v in results.items())
         print(out_text)
@@ -111,6 +169,12 @@ def write_results(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """
+    Build a parser for the CLI.
+
+    Returns:
+        argparse.ArgumentParser: A parser object
+    """
     p = argparse.ArgumentParser(prog="cholla-chem")
     p.add_argument("names", nargs="*", type=str, help="Chemical names to resolve")
     p.add_argument("--input", "-i", type=str, help="Text file with one name per line")
@@ -184,6 +248,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    """
+    Main entry point for the CLI.
+
+    Resolve compound names to SMILES strings.
+
+    Args:
+        argv: Optional sequence of command-line arguments
+
+    Returns:
+        int: Exit code (0 for success, non-zero for failure)
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
 

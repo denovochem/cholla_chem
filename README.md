@@ -1,11 +1,10 @@
 # cholla_chem
 [![version](https://img.shields.io/github/v/release/denovochem/cholla_chem)](https://github.com/denovochem/cholla_chem/releases)
-<!-- [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.org/project/cholla_chem/) -->
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
 [![Run Tests](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml)
 [![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MolecularAI/aizynthfinder/blob/master/contrib/notebook.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/denovochem/cholla_chem/blob/main/examples/example_notebook.ipynb)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
