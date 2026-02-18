@@ -2,7 +2,7 @@ import shutil
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from rdkit import RDLogger
 
@@ -843,13 +843,18 @@ def resolve_compounds_to_smiles(
                     attempt_name_correction=False,
                 )
 
+                # ugliness to get rid of mypy error.
+                copy_compounds_out_dict: Dict[str, Any] = compounds_out_dict.copy()
+
                 for original_name, selected_name in corrected_pairs:
                     resolved = corrected_compounds_out_dict.get(selected_name)
                     if resolved:
-                        compounds_out_dict[original_name] = resolved
-                        compounds_out_dict[original_name]["name_correction_info"] = (
-                            corrected_names_dict[original_name]
-                        )
+                        copy_compounds_out_dict[original_name] = resolved
+                        copy_compounds_out_dict[original_name][
+                            "name_correction_info"
+                        ] = corrected_names_dict[original_name]
+
+                compounds_out_dict = copy_compounds_out_dict
 
     if not detailed_name_dict:
         logger.info("Returning simplified SMILES dictionary.")
