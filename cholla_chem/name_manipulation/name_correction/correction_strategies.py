@@ -1,15 +1,17 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from collections import deque
-from collections.abc import Iterator
+
 import itertools
 import json
 import os
-from pathlib import Path
 import re
+from abc import ABC, abstractmethod
+from collections import deque
+from collections.abc import Iterator
+from pathlib import Path
 from typing import ClassVar, Dict, List, Optional, Set, Tuple
 
 from flashtext import KeywordProcessor
+
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     Correction,
     CorrectionType,
@@ -20,6 +22,7 @@ from cholla_chem.utils.constants import (
     KEYBOARD_NEIGHBOR_SUBSTITUTIONS,
     OCR_SUBSTITUTIONS,
 )
+
 # from cholla_chem.utils.logging_config import logger
 
 # Get the directory of the current file
@@ -94,10 +97,10 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
         def process_and_add(
             chemical_name_tokens: List[str],
             source_dict: Dict[str, List[str]],
-            keyword_processor,
+            keyword_processor: KeywordProcessor,
             max_edits: int,
             source_type_name: str,
-        ):
+        ) -> KeywordProcessor:
             for chemical_name_token in chemical_name_tokens:
                 generated_errors = self.generate_substitution_dict(
                     chemical_name_token, source_dict, max_edits=max_edits

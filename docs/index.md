@@ -31,6 +31,6 @@ resolved_smiles = resolve_compounds_to_smiles(
     'SMILES_dict': {
         'CC(=O)Oc1ccccc1C(=O)O': ['pubchem_default', 'opsin_default']
     },
-    'info_messages': {}
+    'additional_info': {}
 }}"
 ```

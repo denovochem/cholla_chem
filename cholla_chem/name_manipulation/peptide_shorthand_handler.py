@@ -1,20 +1,21 @@
-from typing import List
+from typing import Dict, List, Tuple
 
 from cholla_chem.utils.constants import (
     AA_FULL,
+    C_CAPS,
     # AMINO_ACID_SUB_SITES,
     COUNTER_ACIDS,
-    C_CAPS,
     GREEK_LETTERS,
     N_CAPS,
     PREFIX_MAP,
     PROTECTING_GROUPS,
     SPECIAL_CASES,
 )
+
 # from cholla_chem.utils.logging_config import logger
 
 
-def generate_side_chain_protections():
+def generate_side_chain_protections() -> Dict[str, Tuple[str, str]]:
     """Generate the complete side chain protections dictionary"""
     protections = {}
 
@@ -83,7 +84,7 @@ def split_peptide_shorthand(shorthand: str) -> List[str]:
     return tokens
 
 
-def parse_protected_residue(token: str):
+def parse_protected_residue(token: str) -> Tuple[str, str] | Tuple[None, None]:
     """
     Parse a protected residue token into its base amino acid and protection information.
 
@@ -106,7 +107,7 @@ def parse_protected_residue(token: str):
     return None, None
 
 
-def extract_prefix_modifier(token: str):
+def extract_prefix_modifier(token: str) -> Tuple[str, str, str] | Tuple[None, str, str]:
     """
     Extract prefix modifiers from amino acid tokens.
 

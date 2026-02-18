@@ -6,7 +6,7 @@ When different resolvers disagree on the SMILES for a given compound, the SMILES
 - 'rdkit_standardized': Pick the SMILES that is most standardized by RDKit. Penalizes SMILES with more fragments, formal charges, radicals, and isotopes.
 - 'fewest_fragments': Pick the smiles with the fewest fragments (separated by '.')
 - 'longest_smiles': Pick the longest SMILES.
-- 'shorted_smiles': Pick the shortest SMILES.
+- 'shortest_smiles': Pick the shortest SMILES.
 - 'random': Pick a random SMILES.
 - 'highest_symmetry': Pick the SMILES with the highest symmetry.
 

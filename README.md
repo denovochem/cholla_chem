@@ -1,9 +1,11 @@
 # cholla_chem
-[![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.python.org/pypi/PubChemPy)
+[![version](https://img.shields.io/github/v/release/denovochem/cholla_chem)](https://github.com/denovochem/cholla_chem/releases)
+<!-- [![PyPI Version](https://img.shields.io/pypi/v/PubChemPy?logo=python&logoColor=%23ffffff)](https://pypi.org/project/cholla_chem/) -->
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
 [![Run Tests](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml)
 [![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MolecularAI/aizynthfinder/blob/master/contrib/notebook.ipynb)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
@@ -21,9 +23,10 @@ This library also implements the following new resolvers:
 
 
 The following string editing/manipulation strategies may be applied to compounds to assist with name-to-SMILES resolution:
+- string sanitization for special characters and mojibake.
+- Name correction for OCR errors, typos, pagination errors, etc. 
 - Splitting compounds on common delimiters (useful for mixtures of compounds, e.g. 'BH3•THF')
 - Peptide shorthand expansion (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)' -> 'cyclo(l-aspartyl-l-arginyl-l-valyl-l-tyrosyl-l-isoleucyl-l-histidyl-l-prolyl-l-phenylalanyl)')
-- Name correction for OCR errors, typos, pagination errors, etc. 
 
 
 When resolvers disagree on the SMILES for a given compound, a variety of SMILES selection methods can be employed to determine the "best" SMILES for a given compound name. See the documentation for more details.
@@ -61,7 +64,7 @@ resolved_smiles = resolve_compounds_to_smiles(
     'SMILES_dict': {
         'CC(=O)Oc1ccccc1C(=O)O': ['pubchem_default', 'opsin_default']
     },
-    'info_messages': {}
+    'additional_info': {}
 }}"
 ```
 
@@ -103,14 +106,30 @@ resolved_smiles = resolve_compounds_to_smiles(
     'SMILES_dict': {
         'CC(=O)Oc1ccccc1C(=O)O': ['opsin', 'pubchem', 'cirpy']
     },
-    'info_messages': {}
+    'additional_info': {}
 }}"
+```
+
+## Command line interface
+
+The package can be used as a command line tool. The command line interface can solve single chemical names or read from a file.
+
+```bash
+cholla-chem "aspirin"
+```
+
+```bash
+cholla-chem --input names.txt --output results.tsv
+```
+
+```bash
+cholla-chem --help
 ```
 
 See documentation for more details. 
 
 ## Documentation
-Full documentation is availible [here](https://denovochem.github.io/cholla_chem/)
+Full documentation is available [here](https://denovochem.github.io/cholla_chem/)
 
 ## Contributing
 

@@ -1398,7 +1398,7 @@ class StructuralFormulaParser:
 
         return idx1
 
-    def _build_ester(self, n_carbon=1) -> int:
+    def _build_ester(self, n_carbon: int = 1) -> int:
         """Build a carboxylic acid functional group"""
         idx1 = self.graph.add_atom("C", 0)
         idx2 = self.graph.add_atom("O", 0)
@@ -1437,7 +1437,7 @@ class StructuralFormulaParser:
 
         return [idx1, idx3]
 
-    def _build_acid_halide(self, halide="Cl") -> int:
+    def _build_acid_halide(self, halide: str = "Cl") -> int:
         """Build an ester functional group"""
         idx1 = self.graph.add_atom("C", 0)
         idx2 = self.graph.add_atom("O", 0)

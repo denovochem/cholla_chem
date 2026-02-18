@@ -41,6 +41,7 @@
 !cholla_chem/main.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/cli.py
+!cholla_chem/datatypes.py
 !cholla_chem/name_manipulation/
 !cholla_chem/name_manipulation/__init__.py
 !cholla_chem/name_manipulation/manipulate_names.py
@@ -86,3 +87,7 @@
 !tests/test_pubchem_resolver.py
 !tests/test_smiles_selector.py
 !tests/test_split_name_name_manipulation.py
+
+# Examples
+!examples/
+!examples/example_notebook.ipynb

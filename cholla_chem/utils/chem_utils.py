@@ -1,5 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
+
 from cholla_chem.utils.logging_config import logger
 
 tautomer_enumerator = rdMolStandardize.TautomerEnumerator()
@@ -47,3 +48,45 @@ def canonicalize_smiles(
     except Exception as e:
         logger.warning(f"Could not canonicalize {smiles}: {e}")
         return smiles
+
+
+def smiles_to_inchi(smiles: str) -> str:
+    """
+    Converts a SMILES string to an InChI string using RDKit.
+
+    Args:
+        smiles (str): The input SMILES string to convert
+
+    Returns:
+        str: The InChI string. If conversion fails, returns the input string unchanged.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return ""
+        inchi = Chem.MolToInchi(mol)
+        return inchi
+    except Exception as e:
+        logger.warning(f"Could not convert {smiles} to InChI: {e}")
+        return ""
+
+
+def smiles_to_inchikey(smiles: str) -> str:
+    """
+    Converts a SMILES string to an InChIKey string using RDKit.
+
+    Args:
+        smiles (str): The input SMILES string to convert
+
+    Returns:
+        str: The InChIKey string. If conversion fails, returns an empty string.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return ""
+        inchikey = Chem.MolToInchiKey(mol)
+        return inchikey
+    except Exception as e:
+        logger.warning(f"Could not convert {smiles} to InChIKey: {e}")
+        return ""

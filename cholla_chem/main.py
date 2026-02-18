@@ -2,10 +2,14 @@ import shutil
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from rdkit import RDLogger
 
+from cholla_chem.datatypes import (
+    CompoundResolutionEntry,
+    CompoundResolutionEntryWithNameCorrection,
+)
 from cholla_chem.name_manipulation.manipulate_names import correct_names
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectorConfig,
@@ -452,17 +456,17 @@ def resolve_compounds_using_resolvers(
     resolvers_out_dict = {}
     for resolver in resolvers_list:
         out = {}
-        info_messages = {}
+        additional_info = {}
         for i in range(0, len(compounds_list), batch_size):
             chunk = compounds_list[i : i + batch_size]
-            out_chunk, info_messages_chunk = resolver.name_to_smiles(chunk)
+            out_chunk, additional_info_chunk = resolver.name_to_smiles(chunk)
             out.update(out_chunk)
-            info_messages.update(info_messages_chunk)
+            additional_info.update(additional_info_chunk)
             if resolver.rate_limit_time:
                 time.sleep(resolver.rate_limit_time)
         resolvers_out_dict[resolver.resolver_name] = {
             "out": out,
-            "info_messages": info_messages,
+            "additional_info": additional_info,
         }
     return resolvers_out_dict
 
@@ -471,7 +475,7 @@ def assemble_compounds_resolution_dict(
     compounds: List[str],
     resolvers_out_dict: Dict[str, Dict[str, Dict[str, str]]],
     cleaned_compounds_dict: Dict[str, str],
-) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+) -> Dict[str, CompoundResolutionEntry]:
     """
     Assemble a dictionary mapping each compound to its resolved SMILES string and resolvers.
 
@@ -485,24 +489,26 @@ def assemble_compounds_resolution_dict(
     """
 
     def _assemble_compound_resolution_dict(
-        compound, resolvers_out_dict, cleaned_compounds_dict
-    ):
+        compound: str,
+        resolvers_out_dict: Dict[str, Dict[str, Dict[str, str]]],
+        cleaned_compounds_dict: Dict[str, str],
+    ) -> Dict[str, CompoundResolutionEntry]:
         """ """
         compound_cleaned = cleaned_compounds_dict.get(compound, "")
         compounds_out_dict[compound] = {
             "SMILES": "",
             "SMILES_source": [],
             "SMILES_dict": {},
-            "info_messages": {},
+            "additional_info": {},
         }
 
         for resolver, resolution_dict in resolvers_out_dict.items():
             compound_smiles = resolution_dict["out"].get(compound_cleaned, "")
-            if resolution_dict["info_messages"].get(compound_cleaned, ""):
-                compound_resolver_info_message = resolution_dict["info_messages"].get(
+            if resolution_dict["additional_info"].get(compound_cleaned, ""):
+                compound_resolver_info_message = resolution_dict["additional_info"].get(
                     compound_cleaned, ""
                 )
-                compounds_out_dict[compound]["info_messages"][resolver] = (
+                compounds_out_dict[compound]["additional_info"][resolver] = (
                     compound_resolver_info_message
                 )
             canonical_compound_smiles = canonicalize_smiles(compound_smiles)
@@ -536,12 +542,12 @@ def assemble_compounds_resolution_dict(
 
 
 def assemble_split_compounds_resolution_dict(
-    compounds_out_dict: Dict[str, Dict[str, Dict[str, List[str]]]],
+    compounds_out_dict: Dict[str, CompoundResolutionEntry],
     compounds: List[str],
     resolvers_out_dict: Dict[str, Dict[str, Dict[str, str]]],
     cleaned_compounds_dict: Dict[str, str],
     delimiter_split_dict: Dict[str, List[str]],
-) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+) -> Dict[str, CompoundResolutionEntry]:
     """
     Assemble a dictionary mapping each compound to its resolved SMILES string and resolvers.
 
@@ -557,12 +563,12 @@ def assemble_split_compounds_resolution_dict(
     """
 
     def _assemble_split_compound_resolution_dict_(
-        compound,
-        compounds_out_dict,
-        resolvers_out_dict,
-        cleaned_compounds_dict,
-        delimiter_split_dict,
-    ):
+        compound: str,
+        compounds_out_dict: Dict[str, CompoundResolutionEntry],
+        resolvers_out_dict: Dict[str, Dict[str, Dict[str, str]]],
+        cleaned_compounds_dict: Dict[str, str],
+        delimiter_split_dict: Dict[str, List[str]],
+    ) -> Dict[str, CompoundResolutionEntry]:
         """ """
         compound_cleaned = cleaned_compounds_dict.get(compound, "")
         if compound_cleaned not in delimiter_split_dict:
@@ -610,11 +616,11 @@ def assemble_split_compounds_resolution_dict(
 
 
 def select_smiles_with_criteria(
-    compounds_out_dict,
+    compounds_out_dict: Dict[str, CompoundResolutionEntry],
     resolvers_weight_dict: Dict[str, float],
     resolvers_priority_order: List[str],
     smiles_selection_mode: str,
-):
+) -> Dict[str, CompoundResolutionEntry]:
     """
     Select SMILES representation for each compound using the specified criteria.
 
@@ -652,7 +658,11 @@ def resolve_compounds_to_smiles(
     attempt_name_correction: bool = True,
     internet_connection_available: bool = True,
     name_correction_config: Optional[CorrectorConfig] = None,
-) -> Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]:
+) -> (
+    Dict[str, CompoundResolutionEntry]
+    | Dict[str, CompoundResolutionEntryWithNameCorrection]
+    | Dict[str, str]
+):
     """
     Resolve a list of compound names to their SMILES representations.
 
@@ -833,13 +843,18 @@ def resolve_compounds_to_smiles(
                     attempt_name_correction=False,
                 )
 
+                # ugliness to get rid of mypy error.
+                copy_compounds_out_dict: Dict[str, Any] = compounds_out_dict.copy()
+
                 for original_name, selected_name in corrected_pairs:
                     resolved = corrected_compounds_out_dict.get(selected_name)
                     if resolved:
-                        compounds_out_dict[original_name] = resolved
-                        compounds_out_dict[original_name]["name_correction_info"] = (
-                            corrected_names_dict[original_name]
-                        )
+                        copy_compounds_out_dict[original_name] = resolved
+                        copy_compounds_out_dict[original_name][
+                            "name_correction_info"
+                        ] = corrected_names_dict[original_name]
+
+                compounds_out_dict = copy_compounds_out_dict
 
     if not detailed_name_dict:
         logger.info("Returning simplified SMILES dictionary.")

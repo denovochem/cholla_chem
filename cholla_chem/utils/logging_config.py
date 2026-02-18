@@ -67,7 +67,9 @@ def configure_logging(
         level = LOG_LEVELS.get(env, LOG_LEVELS["default"])
 
     # Configure exception hook for uncaught exceptions
-    def handle_exception(exc_type, exc_value, exc_traceback):
+    def _handle_exception(
+        exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any
+    ) -> None:
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
@@ -76,7 +78,7 @@ def configure_logging(
             "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
         )
 
-    sys.excepthook = handle_exception
+    sys.excepthook = _handle_exception
 
     logger.remove()
 
