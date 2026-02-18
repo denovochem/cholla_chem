@@ -2,7 +2,7 @@ import argparse
 import csv
 import json
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from cholla_chem.main import resolve_compounds_to_smiles
 
@@ -63,8 +63,6 @@ def read_names_from_file(
             return out
 
     if fmt == "smi":
-        # Common .smi convention: "<smiles><whitespace><name...>"
-        # Since you want "names to resolve", we take the *name* if present; otherwise we fall back to the first token.
         with open(path, "r", encoding=encoding, newline="") as f:
             for line in f:
                 line = line.strip()
@@ -81,13 +79,12 @@ def read_names_from_file(
 
 
 def write_results(
-    results: dict,
+    results: Dict,
     *,
     output_path: str | None,
     output_format: str | None = None,
     encoding: str = "utf-8",
 ) -> None:
-    # If no output_path, default to TSV on stdout (same spirit as your current behavior)
     if not output_path:
         out_text = "\n".join(f"{k}\t{v}" for k, v in results.items())
         print(out_text)
@@ -203,7 +200,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not names:
         parser.error("Provide names as arguments or via --input")
 
-    # You’ll adapt this call to match your function signature
     results = resolve_compounds_to_smiles(
         names,
         smiles_selection_mode=args.smiles_selection_mode,
