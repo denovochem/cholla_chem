@@ -1,4 +1,4 @@
-Cholla uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
+cholla_chem uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
 
 - PubChemNameResolver('pubchem_default', resolver_weight=2),
 - OpsinNameResolver('opsin_default', resolver_weight=3),
@@ -42,7 +42,7 @@ resolved_smiles = resolve_compounds_to_smiles(
     'SMILES_dict': {
         'CC(=O)Oc1ccccc1C(=O)O': ['opsin', 'pubchem', 'cirpy']
     },
-    'info_messages': {}
+    'additional_info': {}
 }}"
 ```
 
@@ -54,7 +54,7 @@ Arguments:
 
 - allow_acid (bool, optional): Allow interpretation of acids. Defaults to False.
 - allow_radicals (bool, optional): Enable radical interpretation. Defaults to False.
-- allow_bad_stereo (bool, optional): Allow OPSIN to ignore uninterpreatable stereochem. Defaults to False.
+- allow_bad_stereo (bool, optional): Allow OPSIN to ignore uninterpretable stereochemistry. Defaults to False.
 - wildcard_radicals (bool, optional): Output radicals as wildcards. Defaults to False.
 
 Default weight for 'weighted' SMILES selection method: 3
@@ -232,14 +232,14 @@ class MyCustomResolver(ChemicalNameResolver):
         }
 
         resolved_names_dict = {}
-        info_messages_dict = {}
+        additional_info_dict = {}
         for compound_name in compound_name_list:
             resolved_smiles = lookup_dict.get(compound_name, '')
             resolved_names_dict[compound_name] = resolved_smiles
             if not resolved_smiles:
-                info_messages_dict[compound_name] = 'Some info message.'
+                additional_info_dict[compound_name] = 'Some info message.'
 
-        return resolved_names_dict, info_messages_dict
+        return resolved_names_dict, additional_info_dict
 
 my_custom_resolver = MyCustomResolver(
     resolver_name='example', 
@@ -258,13 +258,13 @@ resolved_smiles = resolve_compounds_to_smiles(
     'SMILES_dict': {
         'c1ccccc1': ['example']
     },
-    'info_messages': {}
+    'additional_info': {}
 },
 'aspirin': {
     'SMILES': '',
     'SMILES_source': [],
     'SMILES_dict': {},
-    'info_messages': {
+    'additional_info': {
         'example': 'Some info message.'
     }
 }}"

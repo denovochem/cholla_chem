@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
+from cholla_chem.datatypes import CompoundResolutionEntry
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectorConfig,
 )
@@ -12,12 +13,11 @@ from cholla_chem.name_manipulation.peptide_shorthand_handler import (
 )
 from cholla_chem.utils.logging_config import logger
 
-
 corrector = ChemNameCorrector()
 
 
 def correct_names(
-    compounds_out_dict: Dict[str, Dict[str, Dict[str, List[str]]]],
+    compounds_out_dict: Dict[str, CompoundResolutionEntry],
     name_correction_config: Optional[CorrectorConfig] = None,
     resolve_peptide_shorthand: Optional[bool] = False,
 ) -> Dict[str, Dict[str, Any]]:

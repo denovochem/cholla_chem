@@ -120,9 +120,9 @@
 
 #     assert set(out.keys()) == {"res1", "res2"}
 #     assert out["res1"]["out"] == {"a": "S_a1", "b": "S_b1"}
-#     assert out["res1"]["info_messages"] == {"a": "i1"}
+#     assert out["res1"]["additional_info"] == {"a": "i1"}
 #     assert out["res2"]["out"] == {"a": "S_a2", "b": ""}
-#     assert out["res2"]["info_messages"] == {"b": "i2"}
+#     assert out["res2"]["additional_info"] == {"b": "i2"}
 
 
 # def test_assemble_compounds_resolution_dict_uses_canonical_smiles(monkeypatch):
@@ -142,8 +142,8 @@
 #     cleaned_mapping = {"ethanol": "ethanol_clean"}
 
 #     resolvers_out = {
-#         "r1": {"out": {"ethanol_clean": "c2h6o"}, "info_messages": {}},
-#         "r2": {"out": {"ethanol_clean": "C2H6O"}, "info_messages": {"ethanol_clean": "ok"}},
+#         "r1": {"out": {"ethanol_clean": "c2h6o"}, "additional_info": {}},
+#         "r2": {"out": {"ethanol_clean": "C2H6O"}, "additional_info": {"ethanol_clean": "ok"}},
 #     }
 
 #     result = assemble_compounds_resolution_dict(compounds, resolvers_out, cleaned_mapping)
@@ -152,7 +152,7 @@
 #     entry = result["ethanol"]
 #     assert entry["SMILES"] == ""  # not yet selected
 #     assert entry["SMILES_dict"] == {"C2H6O": ["r1", "r2"]}
-#     assert entry["info_messages"] == {"r2": "ok"}
+#     assert entry["additional_info"] == {"r2": "ok"}
 
 
 # def test_assemble_split_compounds_resolution_dict_merges_split_smiles(monkeypatch):
@@ -178,7 +178,7 @@
 #             "SMILES": "",
 #             "SMILES_source": [],
 #             "SMILES_dict": {},
-#             "info_messages": {},
+#             "additional_info": {},
 #         }
 #     }
 
@@ -224,7 +224,7 @@
 #                 "S1": ["r1"],
 #                 "S2": ["r2"],
 #             },
-#             "info_messages": {},
+#             "additional_info": {},
 #         }
 #     }
 
