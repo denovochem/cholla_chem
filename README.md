@@ -22,7 +22,7 @@ This library also implements the following new resolvers:
 
 
 The following string editing/manipulation strategies may be applied to compounds to assist with name-to-SMILES resolution:
-- string sanitization for special characters and mojibake.
+- String sanitization for special characters and mojibake encoding errors
 - Name correction for OCR errors, typos, pagination errors, etc. 
 - Splitting compounds on common delimiters (useful for mixtures of compounds, e.g. 'BH3•THF')
 - Peptide shorthand expansion (e.g. 'cyclo(Asp-Arg-Val-Tyr-Ile-His-Pro-Phe)' -> 'cyclo(l-aspartyl-l-arginyl-l-valyl-l-tyrosyl-l-isoleucyl-l-histidyl-l-prolyl-l-phenylalanyl)')
@@ -43,7 +43,7 @@ Resolve chemical names to SMILES by passing a string or a list of strings:
 ```pycon
 from cholla_chem import resolve_compounds_to_smiles
 
-resolved_smiles = resolve_compounds_to_smiles(['aspirin'])
+resolved_smiles = resolve_compounds_to_smiles(compounds_list=['aspirin'])
 
 "{'aspirin': 'CC(=O)Oc1ccccc1C(=O)O'}"
 ```
@@ -53,7 +53,7 @@ See detailed information including which resolver returned which SMILES with det
 from cholla_chem import resolve_compounds_to_smiles
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['2-acetyloxybenzoic acid'], 
+    compounds_list=['2-acetyloxybenzoic acid'], 
     detailed_name_dict=True
 )
 
@@ -93,8 +93,8 @@ cirpy_resolver = CIRpyNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['2-acetyloxybenzoic acid'],
-    [opsin_resolver, pubchem_resolver, cirpy_resolver],
+    compounds_list=['2-acetyloxybenzoic acid'],
+    resolvers_list=[opsin_resolver, pubchem_resolver, cirpy_resolver],
     smiles_selection_mode='weighted',
     detailed_name_dict=True
 )
@@ -113,14 +113,17 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 The package can be used as a command line tool. The command line interface can solve single chemical names or read from a file.
 
+Resolve compounds directly from the command line:
 ```bash
 cholla-chem "aspirin"
 ```
 
+Read compounds from a file:
 ```bash
 cholla-chem --input names.txt --output results.tsv
 ```
 
+See help for more options:
 ```bash
 cholla-chem --help
 ```

@@ -72,8 +72,8 @@ opsin_resolver = OpsinNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['2-acetyloxybenzoic acid'], 
-    [opsin_resolver]
+    compounds_list=['2-acetyloxybenzoic acid'], 
+    resolvers_list=[opsin_resolver]
 )
 ```
 
@@ -91,7 +91,10 @@ pubchem_resolver = PubChemNameResolver(
     resolver_weight=2
 )
 
-resolved_smiles = resolve_compounds_to_smiles(['acetone'], [pubchem_resolver])
+resolved_smiles = resolve_compounds_to_smiles(
+    compounds_list=['acetone'], 
+    resolvers_list=[pubchem_resolver]
+)
 ```
 
 
@@ -108,7 +111,10 @@ cirpy_resolver = CIRpyNameResolver(
     resolver_weight=1
 )
 
-resolved_smiles = resolve_compounds_to_smiles(['acetone'], [cirpy_resolver])
+resolved_smiles = resolve_compounds_to_smiles(
+    compounds_list=['acetone'], 
+    resolvers_list=[cirpy_resolver]
+)
 ```
 
 
@@ -126,7 +132,10 @@ chemspider_resolver = ChemSpiPyNameResolver(
     chemspider_api_key='CHEMSPIDER_API_KEY'
 )
 
-resolved_smiles = resolve_compounds_to_smiles(['acetone'], [chemspider_resolver])
+resolved_smiles = resolve_compounds_to_smiles(
+    compounds_list=['acetone'], 
+    resolvers_list=[chemspider_resolver]
+)
 ```
 
 
@@ -144,8 +153,8 @@ manual_resolver = ManualNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['NaH'], 
-    [manual_resolver]
+    compounds_list=['NaH'], 
+    resolvers_list=[manual_resolver]
 )
 ```
 
@@ -161,7 +170,10 @@ manual_resolver = ManualNameResolver(
     provided_name_dict=custom_name_dict
 )
 
-resolved_smiles = resolve_compounds_to_smiles(['Foobar'], [manual_resolver])
+resolved_smiles = resolve_compounds_to_smiles(
+    compounds_list=['Foobar'], 
+    resolvers_list=[manual_resolver]
+)
 ```
 
 
@@ -179,8 +191,8 @@ structural_formula_resolver = StructuralFormulaNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['CH3CH2CH2COOH'], 
-    [structural_formula_resolver]
+    compounds_list=['CH3CH2CH2COOH'], 
+    resolvers_list=[structural_formula_resolver]
 )
 ```
 
@@ -199,8 +211,8 @@ inorganic_shorthand_resolver = InorganicShorthandNameResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['[Cp*RhCl2]2'], 
-    [inorganic_shorthand_resolver]
+    compounds_list=['[Cp*RhCl2]2'], 
+    resolvers_list=[inorganic_shorthand_resolver]
 )
 ```
 
@@ -247,8 +259,8 @@ my_custom_resolver = MyCustomResolver(
 )
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['benzene', 'aspirin'], 
-    [my_custom_resolver], 
+    compounds_list=['benzene', 'aspirin'], 
+    resolvers_list=[my_custom_resolver], 
     detailed_name_dict=True
 )
 

@@ -26,7 +26,7 @@ def reverse_alphabetical(
     return smiles, smiles_dict[smiles]
 
 resolved_smiles = resolve_compounds_to_smiles(
-    ['aspirin'], 
+    compounds_list=['aspirin'], 
     smiles_selection_mode=reverse_alphabetical
 )
 ```
