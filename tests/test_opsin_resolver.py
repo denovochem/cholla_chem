@@ -125,9 +125,6 @@ def test_name_to_smiles():
     """
     for test_info in CHEMICAL_INFO:
         opsin_smiles = run_opsin(test_info["name"])
-        print("OPSIN outputs:", opsin_smiles.outputs)
-        print("OPSIN errors:", opsin_smiles.errors)
-        print("OPSIN returncode:", opsin_smiles.returncode)
 
         assert opsin_smiles.outputs[0] == test_info["smiles"]
         assert opsin_smiles.errors[0] == test_info["errors"]
