@@ -82,8 +82,6 @@ def run_opsin(
                 tmp_fpath = f.name
                 f.write("\n".join(sanitized_names) + "\n")
 
-            arg_list.append(tmp_fpath)
-
             if allow_acid:
                 arg_list.append("-a")
             if allow_radicals:
@@ -94,6 +92,8 @@ def run_opsin(
                 arg_list.append("-w")
             if failure_analysis:
                 arg_list.append("-detailedFailureAnalysis")
+
+            arg_list.append(tmp_fpath)
 
             result = subprocess.run(
                 arg_list,
@@ -138,12 +138,12 @@ def run_opsin(
                 outputs=outputs, errors=errors, returncode=result.returncode
             )
 
-        except Exception:
-            logger.exception("Unexpected error occurred!")
+        except Exception as e:
+            logger.exception(f"Unexpected error occurred: {e}")
             n = len(names)
             return OpsinResult(
                 outputs=[""] * n,
-                errors=["Unexpected error occurred!"] * n,
+                errors=[f"Unexpected error occurred: {e}"] * n,
                 returncode=1,
             )
         finally:
