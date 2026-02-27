@@ -35,6 +35,7 @@
 !cholla_chem/datafiles/
 !cholla_chem/datafiles/__init__.py
 !cholla_chem/datafiles/chemical_name_tokens.json
+!cholla_chem/datafiles/opsin-cli-2.8.0-jar-with-dependencies.jar
 !cholla_chem/datafiles/name_dicts/
 !cholla_chem/datafiles/name_dicts/__init__.py
 !cholla_chem/datafiles/name_dicts/manual_name_dict.json

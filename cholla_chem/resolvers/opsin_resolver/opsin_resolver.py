@@ -105,7 +105,7 @@ def run_opsin(
             )
 
             if result.returncode != 0 and len(result.stdout) == 0:
-                msg = "\n".join([s for s in result.stderr if s]).strip()
+                msg = (result.stderr or "").strip()
                 if not msg:
                     msg = "OPSIN failed with non-zero return code but stderr was empty."
                 n = len(sanitized_names)
