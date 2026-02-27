@@ -150,7 +150,9 @@ def run_opsin(
                 )
             else:
                 return OpsinResult(
-                    outputs=[""] * n, errors=[""] * n, returncode=result.returncode
+                    outputs=[""] * n,
+                    errors=[f"Unexpected error occurred: {e}"] * n,
+                    returncode=1,
                 )
 
         finally:
