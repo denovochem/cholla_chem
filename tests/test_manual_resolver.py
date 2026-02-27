@@ -7,8 +7,8 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from cholla_chem.resolvers.manual_resolver import (  # noqa: E402
-    process_name_dict,
     name_to_smiles_manual,
+    process_name_dict,
 )
 
 
@@ -90,6 +90,3 @@ def test_name_to_smiles_manual_uses_default_dict(monkeypatch):
     result = name_to_smiles_manual(names)
 
     assert result == {"Ethanol": "C2H6O", "Water": "H2O"}
-
-    # We expect at least one info log call to have been made
-    assert any("Loaded data from" in msg for msg in log_messages)

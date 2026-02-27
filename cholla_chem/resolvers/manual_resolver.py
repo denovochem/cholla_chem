@@ -1,16 +1,8 @@
-from importlib import resources
 import json
-from pathlib import Path
+from importlib import resources
 from typing import Dict, List
 
 from cholla_chem.utils.logging_config import logger
-
-
-# Get the directory of the current file
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_MANUAL_NAME_DICT = (
-    BASE_DIR.parent / "datafiles" / "name_dicts" / "manual_name_dict.json"
-)
 
 
 def load_default_manual_name_dict() -> Dict[str, str]:
@@ -66,7 +58,6 @@ def name_to_smiles_manual(
     manual_name_dict = {}
     if not provided_name_dict:
         loaded_manual_name_dict = load_default_manual_name_dict()
-        logger.info(f"Loaded data from {DEFAULT_MANUAL_NAME_DICT}.")
     else:
         loaded_manual_name_dict = provided_name_dict
         logger.info("Using provided name dictionary.")

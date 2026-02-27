@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Tuple
 
 from typing_extensions import Protocol
 
-from cholla_chem.resolvers.opsin_resolver import name_to_smiles_opsin
+from cholla_chem.resolvers.opsin_resolver.opsin_resolver import name_to_smiles_opsin
 
 
 class Validator(Protocol):
