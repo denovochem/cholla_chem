@@ -141,11 +141,18 @@ def run_opsin(
         except Exception as e:
             logger.exception(f"Unexpected error occurred: {e}")
             n = len(names)
-            return OpsinResult(
-                outputs=[""] * n,
-                errors=[f"Unexpected error occurred: {e}"] * n,
-                returncode=1,
-            )
+            if len(stdout_lines) == 0 and result.returncode != 0:
+                msg = "\n".join([s for s in stderr_lines if s]).strip()
+                if not msg:
+                    msg = "OPSIN failed with non-zero return code but stderr was empty."
+                return OpsinResult(
+                    outputs=[""] * n, errors=[msg] * n, returncode=result.returncode
+                )
+            else:
+                return OpsinResult(
+                    outputs=[""] * n, errors=[""] * n, returncode=result.returncode
+                )
+
         finally:
             if tmp_fpath is not None:
                 try:
