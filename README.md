@@ -3,14 +3,14 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
 [![Run Tests](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml)
-[![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/pages/pages-build-deployment)
+[![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/docs.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/docs.yml)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/denovochem/cholla_chem/blob/main/examples/example_notebook.ipynb)
 
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
 This library can use the following existing name-to-SMILES resolvers:
-- [py2opsin](https://github.com/denovochem/py2opsin)
-- [PubChemPy](https://github.com/denovochem/PubChemPy)
+- [OPSIN](https://github.com/dan2097/opsin) using code adapted from [py2opsin](https://github.com/denovochem/py2opsin)
+- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) using code adapted from [PubChemPy](https://github.com/denovochem/PubChemPy)
 - [CIRpy](https://github.com/mcs07/CIRpy)
 - [ChemSpiPy](https://github.com/mcs07/ChemSpiPy)
 
@@ -111,14 +111,14 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 ## Command line interface
 
-The package can be used as a command line tool. The command line interface can solve single chemical names or read from a file.
+cholla_chem can be used as a command line tool. The command line interface can resolve single chemical names directly from the command line or read from a file.
 
 Resolve compounds directly from the command line:
 ```bash
 cholla-chem "aspirin"
 ```
 
-Read compounds from a file:
+Resolve compounds from a file:
 ```bash
 cholla-chem --input names.txt --output results.tsv
 ```

@@ -48,7 +48,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 
 ## OpsinNameResolver
-This resolver uses a fork of the [py2opsin](https://github.com/denovochem/py2opsin) library that returns the error message from OPSIN if a name cannot be resolved. This resolver can be configured with the following arguments:
+This resolver uses [OPSIN](https://github.com/dan2097/opsin) for name-to-SMILES conversion. The code is adapted from [py2opsin](https://github.com/denovochem/py2opsin). This resolver can be configured with the following arguments:
 
 Arguments:
 
@@ -79,7 +79,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 
 ## PubChemNameResolver
-This resolver uses a fork of the [PubChemPy](https://github.com/denovochem/PubChemPy) library which implements batching with the Power User Gateway XML schema to significantly speedup SMILES resolutions.
+This resolver uses [PubChem](https://pubchem.ncbi.nlm.nih.gov/) for name-to-SMILES conversion. The code is adapted from [PubChemPy](https://github.com/denovochem/PubChemPy) to implement batching with the Power User Gateway XML schema to significantly speed up SMILES resolutions.
 
 Default weight for 'weighted' SMILES selection method: 2
 

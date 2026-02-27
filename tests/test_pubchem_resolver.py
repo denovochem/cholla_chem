@@ -6,7 +6,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from cholla_chem.resolvers.pubchem_resolver import (  # noqa: E402
+from cholla_chem.resolvers.pubchem_resolver.pubchem_resolver import (  # noqa: E402
     name_to_smiles_pubchem,
 )
 
@@ -19,25 +19,20 @@ def test_name_to_smiles_pubchem_basic_mapping(monkeypatch):
         return names
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
 
     captured_args = {}
 
-    class FakeCompound:
-        def __init__(self, smiles):
-            self.smiles = smiles
-
     def fake_get_compounds(names, identifier_type):
         captured_args["names"] = names
         captured_args["identifier_type"] = identifier_type
-        # Return matching FakeCompound objects
-        return [FakeCompound(f"SMILES_{name}") for name in names]
+        return [f"SMILES_{name}" for name in names]
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.pcp.get_compounds",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.get_compounds",
         fake_get_compounds,
         raising=True,
     )
@@ -62,21 +57,17 @@ def test_name_to_smiles_pubchem_handles_none_results(monkeypatch):
         return names
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
 
-    class FakeCompound:
-        def __init__(self, smiles):
-            self.smiles = smiles
-
     def fake_get_compounds(names, identifier_type):
         # Return a list with one valid compound and one None
-        return [FakeCompound("SMILES_valid"), None]
+        return ["SMILES_valid", None]
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.pcp.get_compounds",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.get_compounds",
         fake_get_compounds,
         raising=True,
     )
@@ -95,21 +86,17 @@ def test_name_to_smiles_pubchem_logs_length_mismatch(monkeypatch):
         return names
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.filter_latin1_compatible",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.filter_latin1_compatible",
         fake_filter_latin1_compatible,
         raising=True,
     )
 
-    class FakeCompound:
-        def __init__(self, smiles):
-            self.smiles = smiles
-
     # Return fewer results than input names to trigger the warning
     def fake_get_compounds(names, identifier_type):
-        return [FakeCompound("SMILES_only_first")]
+        return ["SMILES_only_first"]
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.pcp.get_compounds",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.get_compounds",
         fake_get_compounds,
         raising=True,
     )
@@ -122,7 +109,7 @@ def test_name_to_smiles_pubchem_logs_length_mismatch(monkeypatch):
             logged_warnings.append(msg)
 
     monkeypatch.setattr(
-        "cholla_chem.resolvers.pubchem_resolver.logger",
+        "cholla_chem.resolvers.pubchem_resolver.pubchem_resolver.logger",
         FakeLogger,
         raising=True,
     )

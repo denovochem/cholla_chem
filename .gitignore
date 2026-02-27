@@ -65,8 +65,12 @@
 !cholla_chem/resolvers/inorganic_resolver/inorganic_resolver.py
 !cholla_chem/resolvers/inorganic_resolver/inorganic_resolver_tokens.py
 !cholla_chem/resolvers/manual_resolver.py
-!cholla_chem/resolvers/opsin_resolver.py
-!cholla_chem/resolvers/pubchem_resolver.py
+!cholla_chem/resolvers/opsin_resolver/
+!cholla_chem/resolvers/opsin_resolver/__init__.py
+!cholla_chem/resolvers/opsin_resolver/opsin_resolver.py
+!cholla_chem/resolvers/pubchem_resolver/
+!cholla_chem/resolvers/pubchem_resolver/__init__.py
+!cholla_chem/resolvers/pubchem_resolver/pubchem_resolver.py
 !cholla_chem/resolvers/strutural_formula_resolver/
 !cholla_chem/resolvers/strutural_formula_resolver/__init__.py
 !cholla_chem/resolvers/strutural_formula_resolver/structural_formula_resolver.py!cholla_chem/smiles_selector.py

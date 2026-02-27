@@ -28,7 +28,7 @@ nav:
   - Installation: installation.md
   - Getting Started: getting_started.md
   - Resolvers: resolvers.md
-  - Smiles Selection: smiles_selection.md
+  - SMILES Selection: smiles_selection.md
   - Name Correction/Editing: name_manipulation.md
   - Command Line Interface: cli.md
   - Contributing: contributing.md

@@ -27,8 +27,10 @@ from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver import (
     name_to_smiles_inorganic_shorthand,
 )
 from cholla_chem.resolvers.manual_resolver import name_to_smiles_manual
-from cholla_chem.resolvers.opsin_resolver import name_to_smiles_opsin
-from cholla_chem.resolvers.pubchem_resolver import name_to_smiles_pubchem
+from cholla_chem.resolvers.opsin_resolver.opsin_resolver import name_to_smiles_opsin
+from cholla_chem.resolvers.pubchem_resolver.pubchem_resolver import (
+    name_to_smiles_pubchem,
+)
 from cholla_chem.resolvers.strutural_formula_resolver.structural_formula_resolver import (
     name_to_smiles_structural_formula,
 )
