@@ -288,7 +288,7 @@ class ComplexNameParser:
         if not best_metal_symbol:
             raise ParserError(f"Could not identify metal in: {name}")
 
-        if not best_idx:
+        if best_idx is None:
             raise ParserError(f"Could not identify metal in: {name}")
 
         return best_metal_symbol, name[:best_idx] + name[
