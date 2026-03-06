@@ -91,9 +91,6 @@ class ChemNameCorrector:
             char_strategy = CharacterSubstitutionStrategy(
                 max_edits=self.config.max_character_substitution_edits
             )
-            # Add any custom substitutions
-            for orig, replacements in self.config.custom_substitutions.items():
-                char_strategy.add_substitution(orig, replacements)
             strategies.append(char_strategy)
 
         if self.config.enable_character_insertion:

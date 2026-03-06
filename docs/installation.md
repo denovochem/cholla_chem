@@ -1,4 +1,4 @@
-cholla_chem supports Python versions >=3.10. There are no required python dependencies. Java 8+ is required to run OPSIN.
+cholla_chem supports Python versions >=3.10. Java 8+ is required to run OPSIN.
 
 
 ## Installation Option #1: Use pip (recommended)

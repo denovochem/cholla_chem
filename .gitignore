@@ -39,6 +39,13 @@
 !cholla_chem/datafiles/name_dicts/
 !cholla_chem/datafiles/name_dicts/__init__.py
 !cholla_chem/datafiles/name_dicts/manual_name_dict.json
+!cholla_chem/datafiles/flashtext_jsons/
+!cholla_chem/datafiles/flashtext_jsons/__init__.py
+!cholla_chem/datafiles/flashtext_jsons/deletions_map.json
+!cholla_chem/datafiles/flashtext_jsons/insertions_map.json
+!cholla_chem/datafiles/flashtext_jsons/substitutions_map.json
+!cholla_chem/datafiles/flashtext_jsons/transpositions_map.json
+
 !cholla_chem/main.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/cli.py
@@ -54,6 +61,7 @@
 !cholla_chem/name_manipulation/name_correction/regexes.py
 !cholla_chem/name_manipulation/name_correction/scoring.py
 !cholla_chem/name_manipulation/name_correction/validators.py
+!cholla_chem/name_manipulation/name_correction/build_flashtext_ocr_map.py
 !cholla_chem/name_manipulation/peptide_shorthand_handler.py
 !cholla_chem/name_manipulation/split_names.py
 !cholla_chem/name_manipulation/unicode_normalization.py
@@ -75,6 +83,7 @@
 !cholla_chem/resolvers/structural_formula_resolver/
 !cholla_chem/resolvers/structural_formula_resolver/__init__.py
 !cholla_chem/resolvers/structural_formula_resolver/structural_formula_resolver.py
+!cholla_chem/resolvers/structural_formula_resolver/structural_formula_resolver_tokens.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/utils/
 !cholla_chem/utils/__init__.py
@@ -94,6 +103,8 @@
 !tests/test_pubchem_resolver.py
 !tests/test_smiles_selector.py
 !tests/test_split_name_name_manipulation.py
+!tests/test_structural_formula_resolver.py
+!tests/test_ocr_map_consistency.py
 
 # Examples
 !examples/
