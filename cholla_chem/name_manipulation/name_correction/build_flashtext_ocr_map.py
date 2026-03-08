@@ -11,6 +11,7 @@ from cholla_chem.utils.constants import (
     KEYBOARD_NEIGHBOR_SUBSTITUTIONS,
     OCR_SUBSTITUTIONS,
 )
+from cholla_chem.utils.logging_config import logger
 
 BASE_DIR = Path(__file__).resolve().parent
 CHEMICAL_NAME_TOKENS_PATH = os.path.abspath(
@@ -214,9 +215,9 @@ def build_substitution_corrections_map(max_edits: int = 1) -> Dict[str, str]:
                     corrections_map[clean_error_key] = chemical_name_token
                     count += 1
 
-        print(f"[{source_name}] Added {count} new mappings")
+        logger.info(f"[{source_name}] Added {count} new mappings")
 
-    print(f"Total mappings: {len(corrections_map)}")
+    logger.info(f"Total mappings: {len(corrections_map)}")
     return corrections_map
 
 
@@ -245,8 +246,8 @@ def build_insertion_corrections_map(max_edits: int = 1) -> Dict[str, str]:
                 corrections_map[clean_error_key] = token
                 count += 1
 
-    print(f"[Insertion] Added {count} new mappings")
-    print(f"[Insertion] Total mappings: {len(corrections_map)}")
+    logger.info(f"[Insertion] Added {count} new mappings")
+    logger.info(f"[Insertion] Total mappings: {len(corrections_map)}")
     return corrections_map
 
 
@@ -275,8 +276,8 @@ def build_deletion_corrections_map(max_edits: int = 1) -> Dict[str, str]:
                 corrections_map[clean_error_key] = token
                 count += 1
 
-    print(f"[Deletion] Added {count} new mappings")
-    print(f"[Deletion] Total mappings: {len(corrections_map)}")
+    logger.info(f"[Deletion] Added {count} new mappings")
+    logger.info(f"[Deletion] Total mappings: {len(corrections_map)}")
     return corrections_map
 
 
@@ -305,6 +306,6 @@ def build_transposition_corrections_map(max_edits: int = 1) -> Dict[str, str]:
                 corrections_map[clean_error_key] = token
                 count += 1
 
-    print(f"[Transposition] Added {count} new mappings")
-    print(f"[Transposition] Total mappings: {len(corrections_map)}")
+    logger.info(f"[Transposition] Added {count} new mappings")
+    logger.info(f"[Transposition] Total mappings: {len(corrections_map)}")
     return corrections_map
