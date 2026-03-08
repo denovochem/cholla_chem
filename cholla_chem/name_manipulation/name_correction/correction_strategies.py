@@ -1,25 +1,25 @@
 from __future__ import annotations
 
 import itertools
-import json
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from importlib import resources as importlib_resources
 from typing import ClassVar, Dict, List, Optional, Tuple
 
 from flashtext import KeywordProcessor
 
+from cholla_chem.name_manipulation.name_correction.build_flashtext_ocr_map import (
+    build_deletion_corrections_map,
+    build_insertion_corrections_map,
+    build_substitution_corrections_map,
+    build_transposition_corrections_map,
+)
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     Correction,
     CorrectionType,
     CorrectorConfig,
 )
 from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
-
-# from cholla_chem.utils.logging_config import logger
-
-FLASHTEXT_DICTS_PACKAGE = "cholla_chem.datafiles.flashtext_jsons"
 
 
 class CorrectionStrategy(ABC):
@@ -88,23 +88,14 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
         self._substitutions = substitutions
         self._max_edits = max_edits
 
-    def _initialize_keyword_processor(
-        self,
-        max_edits: int = 1,
-    ):
+    def _initialize_keyword_processor(self):
         """
         Initialize the keyword processor with the given substitutions.
         """
         kp = KeywordProcessor()
         kp.non_word_boundaries = set()
 
-        # Load pre-computed corrections map (fast path)
-        with (
-            importlib_resources.files(FLASHTEXT_DICTS_PACKAGE)
-            .joinpath("substitutions_map.json")
-            .open("r", encoding="utf-8") as f
-        ):
-            corrections_map = json.load(f)
+        corrections_map = build_substitution_corrections_map(max_edits=self._max_edits)
 
         for error_key, correct_token in corrections_map.items():
             kp.add_keyword(error_key, correct_token)
@@ -124,7 +115,7 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
             config = CorrectorConfig()
 
         if self.keyword_processor is None:
-            self._initialize_keyword_processor(max_edits=self._max_edits)
+            self._initialize_keyword_processor()
 
         kp = self.keyword_processor
         assert kp is not None, "Keyword processor should be initialized"
@@ -266,18 +257,13 @@ class CharacterInsertionStrategy(CorrectionStrategy):
         self.keyword_processor = None
         self._max_edits = max_edits
 
-    def _initialize_keyword_processor(self, max_edits: int = 1):
+    def _initialize_keyword_processor(self):
         kp = KeywordProcessor()
         kp.non_word_boundaries = set()
 
-        # Load pre-computed corrections map (fast path)
-        with (
-            importlib_resources.files(FLASHTEXT_DICTS_PACKAGE)
-            .joinpath("insertions_map.json")
-            .open("r", encoding="utf-8") as f
-        ):
-            corrections_map = json.load(f)
+        corrections_map = build_insertion_corrections_map(max_edits=self._max_edits)
 
+        # Load pre-computed corrections map (fast path)
         for error_key, correct_token in corrections_map.items():
             kp.add_keyword(error_key, correct_token)
 
@@ -293,7 +279,7 @@ class CharacterInsertionStrategy(CorrectionStrategy):
             config = CorrectorConfig()
 
         if self.keyword_processor is None:
-            self._initialize_keyword_processor(max_edits=self._max_edits)
+            self._initialize_keyword_processor()
 
         kp = self.keyword_processor
         assert kp is not None, "Keyword processor should be initialized"
@@ -389,17 +375,11 @@ class CharacterDeletionStrategy(CorrectionStrategy):
         self.keyword_processor = None
         self._max_edits = max_edits
 
-    def _initialize_keyword_processor(self, max_edits: int = 1):
+    def _initialize_keyword_processor(self):
         kp = KeywordProcessor()
         kp.non_word_boundaries = set()
 
-        # Load pre-computed corrections map (fast path)
-        with (
-            importlib_resources.files(FLASHTEXT_DICTS_PACKAGE)
-            .joinpath("deletions_map.json")
-            .open("r", encoding="utf-8") as f
-        ):
-            corrections_map = json.load(f)
+        corrections_map = build_deletion_corrections_map(max_edits=self._max_edits)
 
         for error_key, correct_token in corrections_map.items():
             kp.add_keyword(error_key, correct_token)
@@ -416,7 +396,7 @@ class CharacterDeletionStrategy(CorrectionStrategy):
             config = CorrectorConfig()
 
         if self.keyword_processor is None:
-            self._initialize_keyword_processor(max_edits=self._max_edits)
+            self._initialize_keyword_processor()
 
         kp = self.keyword_processor
         assert kp is not None, "Keyword processor should be initialized"
@@ -512,17 +492,11 @@ class CharacterTranspositionStrategy(CorrectionStrategy):
         self.keyword_processor = None
         self._max_edits = max_edits
 
-    def _initialize_keyword_processor(self, max_edits: int = 1):
+    def _initialize_keyword_processor(self):
         kp = KeywordProcessor()
         kp.non_word_boundaries = set()
 
-        # Load pre-computed corrections map (fast path)
-        with (
-            importlib_resources.files(FLASHTEXT_DICTS_PACKAGE)
-            .joinpath("transpositions_map.json")
-            .open("r", encoding="utf-8") as f
-        ):
-            corrections_map = json.load(f)
+        corrections_map = build_transposition_corrections_map(max_edits=self._max_edits)
 
         for error_key, correct_token in corrections_map.items():
             kp.add_keyword(error_key, correct_token)
@@ -539,7 +513,7 @@ class CharacterTranspositionStrategy(CorrectionStrategy):
             config = CorrectorConfig()
 
         if self.keyword_processor is None:
-            self._initialize_keyword_processor(max_edits=self._max_edits)
+            self._initialize_keyword_processor()
 
         kp = self.keyword_processor
         assert kp is not None, "Keyword processor should be initialized"

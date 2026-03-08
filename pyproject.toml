@@ -40,7 +40,6 @@ cholla_chem = [
     "datafiles/*.json",
     "datafiles/name_dicts/*.json",
     "datafiles/opsin-cli-2.8.0-jar-with-dependencies.jar",
-    "datafiles/flashtext_dicts/*.json",
 ]
 
 [tool.setuptools.dynamic]

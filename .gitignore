@@ -93,6 +93,10 @@
 !cholla_chem/utils/string_utils.py
 !cholla_chem/utils/file_utils.py
 
+!scripts
+!scripts/__init__.py
+!scripts/build_flashtext_ocr_maps.py
+
 # Tests
 !tests/
 !tests/test_chemspipy_resolver.py
