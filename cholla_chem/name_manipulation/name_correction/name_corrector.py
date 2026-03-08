@@ -89,25 +89,25 @@ class ChemNameCorrector:
 
         if self.config.enable_character_substitution:
             char_strategy = CharacterSubstitutionStrategy(
-                max_edits=self.config.max_character_substitution_edits
+                max_edits=self.config.max_character_substitution_edits_per_morpheme
             )
             strategies.append(char_strategy)
 
         if self.config.enable_character_insertion:
             char_insertion_strategy = CharacterInsertionStrategy(
-                max_edits=self.config.max_character_insertion_edits
+                max_edits=self.config.max_character_insertion_edits_per_morpheme
             )
             strategies.append(char_insertion_strategy)
 
         if self.config.enable_character_deletion:
             char_deletion_strategy = CharacterDeletionStrategy(
-                max_edits=self.config.max_character_deletion_edits
+                max_edits=self.config.max_character_deletion_edits_per_morpheme
             )
             strategies.append(char_deletion_strategy)
 
         if self.config.enable_transposition:
             char_transposition_strategy = CharacterTranspositionStrategy(
-                max_edits=self.config.max_transposition_edits
+                max_edits=self.config.max_transposition_edits_per_morpheme
             )
             strategies.append(char_transposition_strategy)
 
@@ -223,18 +223,28 @@ class ChemNameCorrector:
         """Generate candidates from all strategies."""
         candidates: List[CorrectionCandidate] = []
 
+        names_to_process = [(name, 0)]
         for strategy in self.strategies:
-            for new_text, new_corrections in strategy.generate_candidates(
-                name, self.config
-            ):
-                if len(new_corrections) <= self.config.max_corrections_per_candidate:
-                    candidates.append(
-                        CorrectionCandidate(
+            for name_to_process, num_corrections in names_to_process:
+                for new_text, new_corrections in strategy.generate_candidates(
+                    name_to_process, num_corrections, self.config
+                ):
+                    if (
+                        len(new_corrections)
+                        <= self.config.max_corrections_per_candidate
+                    ):
+                        candidate = CorrectionCandidate(
                             name=new_text,
                             original_name=name,
                             corrections=new_corrections,
                         )
-                    )
+                        candidates.append(candidate)
+
+                        if new_text in names_to_process:
+                            continue
+                        if len(names_to_process) >= self.config.max_candidates:
+                            continue
+                        names_to_process.append((new_text, len(new_corrections)))
 
         return candidates
 

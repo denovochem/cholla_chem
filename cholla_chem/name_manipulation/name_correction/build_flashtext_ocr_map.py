@@ -86,6 +86,9 @@ def generate_insertion_errors(word: str, max_edits: int = 1) -> Set[str]:
 
             insertion_candidates: Set[str] = set()
 
+            # Add hyphen as a possible insertion before, in the middle, or after a morpheme
+            insertion_candidates.add("-")
+
             if left is not None:
                 insertion_candidates.add(left)
                 insertion_candidates.update(
