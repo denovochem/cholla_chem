@@ -1,20 +1,27 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Callable, Dict
 
 import pytest
 
-from cholla_chem.name_manipulation.name_correction.build_flashtext_ocr_map import (
+# Paths
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Ensure project root is on sys.path so we can import cholla_chem modules
+project_root_str = str(PROJECT_ROOT)
+if project_root_str not in sys.path:
+    sys.path.insert(0, project_root_str)
+
+from cholla_chem.name_manipulation.name_correction.build_flashtext_ocr_map import (  # noqa: E402
     build_deletion_corrections_map,
     build_insertion_corrections_map,
     build_substitution_corrections_map,
     build_transposition_corrections_map,
 )
 
-# Paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATAFILES_DIR = PROJECT_ROOT / "cholla_chem" / "datafiles" / "flashtext_jsons"
 
 SUBSTITUTIONS_MAP_PATH = DATAFILES_DIR / "substitutions_map.json"
