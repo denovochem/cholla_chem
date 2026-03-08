@@ -1,22 +1,24 @@
 from __future__ import annotations
-from importlib import resources
+
 import json
+import os
 import re
+from pathlib import Path
 from typing import ClassVar, Dict, List, Optional
 
+from flashtext import KeywordProcessor
 from Levenshtein import ratio as levenshtein_ratio
+
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectionCandidate,
     CorrectorConfig,
 )
 from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
 
-
-def load_chemical_name_tokens() -> List[str]:
-    """Load chemical name tokens from package data using importlib.resources."""
-    # Open the file as text from within the package
-    with resources.open_text("cholla_chem.datafiles", "chemical_name_tokens.json") as f:
-        return json.load(f)
+BASE_DIR = Path(__file__).resolve().parent
+CHEMICAL_NAME_TOKENS_PATH = os.path.abspath(
+    BASE_DIR.parent.parent / "datafiles" / "chemical_name_tokens.json"
+)
 
 
 class ChemicalNameScorer:
@@ -50,13 +52,28 @@ class ChemicalNameScorer:
         """
         self.config = config or CorrectorConfig()
 
-        self.chemical_morpheme_list = load_chemical_name_tokens()
-
-        self.chemical_morpheme_list = [
-            ele for ele in self.chemical_morpheme_list if len(ele) > 1
-        ]
         self.original_name_num_morphemes: Optional[int] = None
         self.original_name_num_regex_matches: Optional[int] = None
+        self.keyword_processor: Optional[KeywordProcessor] = None
+
+    def _initialize_keyword_processor(
+        self,
+        max_edits: int = 1,
+    ):
+        """
+        Initialize the keyword processor with the given substitutions.
+        """
+        kp = KeywordProcessor()
+        kp.non_word_boundaries = set()
+
+        # Load pre-computed corrections map (fast path)
+        with open(CHEMICAL_NAME_TOKENS_PATH, "r", encoding="utf-8") as f:
+            chemical_name_tokens: List[str] = json.load(f)
+
+        for chemical_name_token in chemical_name_tokens:
+            kp.add_keyword(chemical_name_token)
+
+        self.keyword_processor = kp
 
     def score(self, candidate: CorrectionCandidate) -> CorrectionCandidate:
         """
@@ -69,7 +86,6 @@ class ChemicalNameScorer:
             The same candidate with updated score and score_components
         """
         components: Dict[str, float] = {}
-
         if not self.original_name_num_morphemes:
             self.original_name_num_morphemes = self._get_number_of_chemical_morphemes(
                 candidate.original_name
@@ -82,6 +98,7 @@ class ChemicalNameScorer:
 
         # Calculate individual components
         components["bracket_balance"] = self._score_bracket_balance(candidate.name)
+
         components["correction_penalty"] = self._score_correction_count(
             candidate.num_corrections
         )
@@ -112,12 +129,13 @@ class ChemicalNameScorer:
         """
         Get the number of chemical morphemes in the name.
         """
-        num_morphemes = sum(
-            1 for morpheme in self.chemical_morpheme_list if morpheme in name
-        )
+        if not self.keyword_processor:
+            self._initialize_keyword_processor()
 
-        if not num_morphemes:
-            return 0
+        kp = self.keyword_processor
+        assert kp is not None, "Keyword processor should be initialized"
+        matches = kp.extract_keywords(name)
+        num_morphemes = len(matches)
 
         return num_morphemes
 

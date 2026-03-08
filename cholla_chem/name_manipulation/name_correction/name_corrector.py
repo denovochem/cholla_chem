@@ -1,24 +1,27 @@
 from __future__ import annotations
-from typing import Dict, List, Optional, Tuple
+
+from typing import Dict, List, Optional
 
 from cholla_chem.name_manipulation.name_correction.correction_strategies import (
-    CorrectionStrategy,
     BracketBalancingStrategy,
+    CharacterDeletionStrategy,
+    CharacterInsertionStrategy,
     CharacterSubstitutionStrategy,
+    CharacterTranspositionStrategy,
+    CorrectionStrategy,
     LocantCorrectionStrategy,
     PunctuationRestorationStrategy,
 )
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectionCandidate,
     CorrectorConfig,
-    Correction,
 )
 from cholla_chem.name_manipulation.name_correction.scoring import (
     ChemicalNameScorer,
 )
 from cholla_chem.name_manipulation.name_correction.validators import (
-    Validator,
     OPSINValidator,
+    Validator,
 )
 
 
@@ -86,12 +89,27 @@ class ChemNameCorrector:
 
         if self.config.enable_character_substitution:
             char_strategy = CharacterSubstitutionStrategy(
-                max_edits=self.config.max_character_substitution_edits
+                max_edits=self.config.max_character_substitution_edits_per_morpheme
             )
-            # Add any custom substitutions
-            for orig, replacements in self.config.custom_substitutions.items():
-                char_strategy.add_substitution(orig, replacements)
             strategies.append(char_strategy)
+
+        if self.config.enable_character_insertion:
+            char_insertion_strategy = CharacterInsertionStrategy(
+                max_edits=self.config.max_character_insertion_edits_per_morpheme
+            )
+            strategies.append(char_insertion_strategy)
+
+        if self.config.enable_character_deletion:
+            char_deletion_strategy = CharacterDeletionStrategy(
+                max_edits=self.config.max_character_deletion_edits_per_morpheme
+            )
+            strategies.append(char_deletion_strategy)
+
+        if self.config.enable_transposition:
+            char_transposition_strategy = CharacterTranspositionStrategy(
+                max_edits=self.config.max_transposition_edits_per_morpheme
+            )
+            strategies.append(char_transposition_strategy)
 
         if self.config.enable_punctuation_restoration:
             strategies.append(PunctuationRestorationStrategy())
@@ -205,38 +223,28 @@ class ChemNameCorrector:
         """Generate candidates from all strategies."""
         candidates: List[CorrectionCandidate] = []
 
-        # Apply each strategy
-        current_texts: List[Tuple[str, List[Correction]]] = [
-            (name, [])
-        ]  # (text, corrections)
+        names_to_process = [(name, 0)]
         for strategy in self.strategies:
-            new_texts = []
-
-            for text, existing_corrections in current_texts:
-                new_texts.append((text, existing_corrections))
+            for name_to_process, num_corrections in names_to_process:
                 for new_text, new_corrections in strategy.generate_candidates(
-                    text, self.config
+                    name_to_process, num_corrections, self.config
                 ):
-                    combined_corrections = existing_corrections + new_corrections
-
-                    # Check max corrections limit
                     if (
-                        len(combined_corrections)
+                        len(new_corrections)
                         <= self.config.max_corrections_per_candidate
                     ):
-                        new_texts.append((new_text, combined_corrections))
-
-                        candidates.append(
-                            CorrectionCandidate(
-                                name=new_text,
-                                original_name=name,
-                                corrections=combined_corrections,
-                            )
+                        candidate = CorrectionCandidate(
+                            name=new_text,
+                            original_name=name,
+                            corrections=new_corrections,
                         )
+                        candidates.append(candidate)
 
-            # Update current texts for next strategy
-            # Limit to prevent explosion
-            current_texts = new_texts[: self.config.max_candidates * 2]
+                        if new_text in names_to_process:
+                            continue
+                        if len(names_to_process) >= self.config.max_candidates:
+                            continue
+                        names_to_process.append((new_text, len(new_corrections)))
 
         return candidates
 

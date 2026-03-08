@@ -745,6 +745,8 @@ OCR_SUBSTITUTIONS = {
     "n": ["ii", "ri", "rt"],
     "lo": ["b"],
     "b": ["lo"],
+    "y": ["v"],
+    "j": ["i"],
     # Separators and Primes
     ",": [".", "'", "`"],
     ".": [",", "-"],

@@ -8,6 +8,7 @@ from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver_tokens import (
     COUNTER_ION_DATABASE,
     LIGAND_DATABASE,
     METAL_DATABASE,
+    BondingMode,
     LigandInfo,
     MetalInfo,
 )
@@ -287,7 +288,7 @@ class ComplexNameParser:
         if not best_metal_symbol:
             raise ParserError(f"Could not identify metal in: {name}")
 
-        if not best_idx:
+        if best_idx is None:
             raise ParserError(f"Could not identify metal in: {name}")
 
         return best_metal_symbol, name[:best_idx] + name[
@@ -639,7 +640,7 @@ class SMILESBuilder:
             return self.ligand_db[name].smiles
 
         # Check aliases
-        for lig_name, info in self.ligand_db.items():
+        for info in self.ligand_db.values():
             aliases_lower = [alias.lower() for alias in info.aliases]
             if name.lower() in aliases_lower:
                 return info.smiles
@@ -744,10 +745,12 @@ class InorganicNameToSMILES:
         self,
         name: str,
         smiles: str,
+        mapped_smiles: str,
         denticity: int = 1,
         charge: int = 0,
         aliases: Optional[Tuple[str, ...]] = None,
         description: str = "",
+        binding_modes: Optional[Tuple[BondingMode, ...]] = None,
     ) -> None:
         """
         Add a new ligand to the database.
@@ -755,26 +758,42 @@ class InorganicNameToSMILES:
         Args:
             name: Ligand abbreviation (e.g., "dppe")
             smiles: SMILES representation
+            mapped_smiles: mapped SMILES representation
             denticity: Number of coordination sites
             charge: Formal charge of the ligand
             aliases: Alternative names
             description: Human-readable description
+            binding_modes: Binding modes for this ligand
         """
+        if binding_modes is None:
+            binding_modes = (
+                {
+                    "name": "",
+                    "coordination_kind": "",
+                    "hapticity": None,
+                    "donor_mapnums": (),
+                    "preferred_bond_type": "",
+                },
+            )
         self.ligand_db[name] = LigandInfo(
             smiles=smiles,
+            mapped_smiles=mapped_smiles,
             denticity=denticity,
             charge=charge,
             aliases=aliases if aliases else tuple(),
             description=description,
+            binding_modes=binding_modes,
         )
 
     def add_counter_ion(
         self,
         name: str,
         smiles: str,
+        mapped_smiles: str,
         charge: int = -1,
         aliases: Optional[Tuple[str, ...]] = None,
         description: str = "",
+        binding_modes: Optional[Tuple[BondingMode, ...]] = None,
     ) -> None:
         """
         Add a new counter ion to the database.
@@ -782,15 +801,29 @@ class InorganicNameToSMILES:
         Args:
             name: Counter ion abbreviation
             smiles: SMILES representation
+            mapped_smiles: mapped SMILES representation
             charge: Formal charge (usually -1)
             aliases: Alternative names
             description: Human-readable description
+            binding_modes: Binding modes for this counter ion
         """
+        if binding_modes is None:
+            binding_modes = (
+                {
+                    "name": "",
+                    "coordination_kind": "",
+                    "hapticity": None,
+                    "donor_mapnums": (),
+                    "preferred_bond_type": "",
+                },
+            )
         self.counter_ion_db[name] = LigandInfo(
             smiles=smiles,
+            mapped_smiles=mapped_smiles,
             charge=charge,
             aliases=aliases if aliases else tuple(),
             description=description,
+            binding_modes=binding_modes,
         )
 
     def list_available_ligands(self) -> List[str]:
