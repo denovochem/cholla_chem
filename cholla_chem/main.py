@@ -6,12 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from rdkit import RDLogger
 
-from cholla_chem.dataclasses import (
-    CompoundResolutionEntry,
-    CompoundResolutionEntryWithNameCorrection,
-)
 from cholla_chem.name_manipulation.manipulate_names import correct_names
-from cholla_chem.name_manipulation.name_correction.dataclasses import (
+from cholla_chem.name_manipulation.name_correction.types import (
     CorrectorConfig,
 )
 from cholla_chem.name_manipulation.split_names import (
@@ -35,6 +31,10 @@ from cholla_chem.resolvers.structural_formula_resolver.structural_formula_resolv
     name_to_smiles_structural_formula,
 )
 from cholla_chem.smiles_selector import SMILESSelector
+from cholla_chem.types import (
+    CompoundResolutionEntry,
+    CompoundResolutionEntryWithNameCorrection,
+)
 from cholla_chem.utils.chem_utils import canonicalize_smiles
 from cholla_chem.utils.logging_config import logger
 

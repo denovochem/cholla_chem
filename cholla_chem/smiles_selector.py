@@ -4,7 +4,7 @@ from typing import Any, Callable, DefaultDict, Dict, List, Optional, Tuple
 
 from rdkit import Chem
 
-from cholla_chem.dataclasses import CompoundResolutionEntry
+from cholla_chem.types import CompoundResolutionEntry
 
 
 class SMILESSelector:

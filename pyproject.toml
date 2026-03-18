@@ -48,5 +48,12 @@ dependencies = {file = ["requirements.txt"]}
 [tool.mypy]
 ignore_missing_imports = true
 
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "ruff>=0.15.6",
+]
+
 [project.scripts]
 cholla-chem = "cholla_chem.cli:main"

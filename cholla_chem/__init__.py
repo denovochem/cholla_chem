@@ -11,10 +11,10 @@ from cholla_chem.main import (
     StructuralFormulaNameResolver,
     resolve_compounds_to_smiles,
 )
-from cholla_chem.name_manipulation.name_correction.dataclasses import CorrectorConfig
 from cholla_chem.name_manipulation.name_correction.name_corrector import (
     ChemNameCorrector,
 )
+from cholla_chem.name_manipulation.name_correction.types import CorrectorConfig
 
 __all__ = [
     "resolve_compounds_to_smiles",

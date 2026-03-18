@@ -8,6 +8,7 @@
 !.github/workflows/tests.yml
 !.github/workflows/publish.yml
 !.gitignore
+!.gitattributes
 !LICENSE
 !MANIFEST.IN
 !README.md
@@ -49,7 +50,7 @@
 !cholla_chem/main.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/cli.py
-!cholla_chem/dataclasses.py
+!cholla_chem/types.py
 !cholla_chem/name_manipulation/
 !cholla_chem/name_manipulation/__init__.py
 !cholla_chem/name_manipulation/manipulate_names.py

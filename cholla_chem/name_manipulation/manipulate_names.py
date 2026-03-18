@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
-from cholla_chem.name_manipulation.name_correction.dataclasses import (
-    CorrectorConfig,
-)
 from cholla_chem.name_manipulation.name_correction.name_corrector import (
     ChemNameCorrector,
+)
+from cholla_chem.name_manipulation.name_correction.types import (
+    CorrectorConfig,
 )
 from cholla_chem.name_manipulation.peptide_shorthand_handler import (
     looks_like_peptide_shorthand,
