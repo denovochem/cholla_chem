@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from rdkit import RDLogger
 
 from cholla_chem.name_manipulation.manipulate_names import correct_names
-from cholla_chem.name_manipulation.name_correction.types import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     CorrectorConfig,
 )
 from cholla_chem.name_manipulation.split_names import (

@@ -14,12 +14,12 @@ from cholla_chem.name_manipulation.name_correction.build_flashtext_ocr_map impor
     build_substitution_corrections_map,
     build_transposition_corrections_map,
 )
-from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
-from cholla_chem.name_manipulation.name_correction.types import (
+from cholla_chem.name_manipulation.name_correction.dataclasses import (
     Correction,
     CorrectionType,
     CorrectorConfig,
 )
+from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
 
 
 class CorrectionStrategy(ABC):
