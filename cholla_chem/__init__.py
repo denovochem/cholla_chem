@@ -1,5 +1,7 @@
 """cholla_chem initialization."""
 
+from importlib.metadata import PackageNotFoundError, version
+
 from cholla_chem.main import (
     ChemicalNameResolver,
     ChemSpiPyResolver,
@@ -29,3 +31,8 @@ __all__ = [
     "ChemNameCorrector",
     "CorrectorConfig",
 ]
+
+try:
+    __version__ = version("cholla_chem")
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"

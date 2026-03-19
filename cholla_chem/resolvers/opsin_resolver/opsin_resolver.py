@@ -24,7 +24,7 @@ class OpsinResult:
 
 @contextmanager
 def opsin_jar_path() -> Iterator[str]:
-    jar_name = "opsin-cli-2.8.0-jar-with-dependencies.jar"
+    jar_name = "opsin-cli-2.9.0-jar-with-dependencies.jar"
 
     try:
         # py >= 3.9
