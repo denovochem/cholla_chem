@@ -29,5 +29,3 @@ __all__ = [
     "ChemNameCorrector",
     "CorrectorConfig",
 ]
-
-__version__ = "0.1.0"

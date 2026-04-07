@@ -9,11 +9,10 @@
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
 This library can use the following existing name-to-SMILES resolvers:
-- [OPSIN](https://github.com/dan2097/opsin) using code adapted from [py2opsin](https://github.com/denovochem/py2opsin)
-- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) using code adapted from [PubChemPy](https://github.com/denovochem/PubChemPy)
+- [OPSIN](https://github.com/dan2097/opsin) using code adapted from [py2opsin](https://github.com/JacksonBurns/py2opsin)
+- [PubChem](https://pubchem.ncbi.nlm.nih.gov/) using code adapted from [PubChemPy](https://github.com/mcs07/PubChemPy)
 - [CIRpy](https://github.com/mcs07/CIRpy)
 - [ChemSpiPy](https://github.com/mcs07/ChemSpiPy)
-
 
 This library also implements the following new resolvers:
 - Manually curated dataset of common names not correctly resolved by other resolvers (e.g. 'NaH')

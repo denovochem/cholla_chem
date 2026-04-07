@@ -1,35 +1,25 @@
 from __future__ import annotations
 
 import itertools
-import json
-import os
 import re
 from abc import ABC, abstractmethod
-from collections import deque
 from collections.abc import Iterator
-from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Set, Tuple
+from typing import ClassVar, Dict, List, Optional, Tuple
 
 from flashtext import KeywordProcessor
 
+from cholla_chem.name_manipulation.name_correction.build_flashtext_ocr_map import (
+    build_deletion_corrections_map,
+    build_insertion_corrections_map,
+    build_substitution_corrections_map,
+    build_transposition_corrections_map,
+)
 from cholla_chem.name_manipulation.name_correction.dataclasses import (
     Correction,
     CorrectionType,
     CorrectorConfig,
 )
 from cholla_chem.name_manipulation.name_correction.regexes import PATTERNS
-from cholla_chem.utils.constants import (
-    KEYBOARD_NEIGHBOR_SUBSTITUTIONS,
-    OCR_SUBSTITUTIONS,
-)
-
-# from cholla_chem.utils.logging_config import logger
-
-# Get the directory of the current file
-BASE_DIR = Path(__file__).resolve().parent
-CHEMICAL_NAME_TOKENS_PATH = os.path.abspath(
-    BASE_DIR.parent.parent / "datafiles" / "chemical_name_tokens.json"
-)
 
 
 class CorrectionStrategy(ABC):
@@ -53,13 +43,17 @@ class CorrectionStrategy(ABC):
 
     @abstractmethod
     def generate_candidates(
-        self, text: str, config: CorrectorConfig
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
         """
         Generate correction candidates from input text.
 
         Args:
             text: Input text to correct
+            num_corrections_applied: Number of corrections already applied
             config: Corrector configuration
 
         Yields:
@@ -86,110 +80,45 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
     ):
         """
         Initialize with substitution map using FlashText for O(N) performance.
+
+        Uses pre-computed corrections map for fast loading when no custom
+        substitutions are provided.
         """
-        self.keyword_processor = KeywordProcessor()
-        self.keyword_processor.non_word_boundaries = set()
+        self.keyword_processor = None
+        self._substitutions = substitutions
+        self._max_edits = max_edits
 
-        # We store metadata to handle 'OCR' vs 'Typo' descriptions if needed,
-        # though standard FlashText maps keyword -> string.
-        # Here we map: error_string -> correct_token
+    def _initialize_keyword_processor(self):
+        """
+        Initialize the keyword processor with the given substitutions.
+        """
+        kp = KeywordProcessor()
+        kp.non_word_boundaries = set()
 
-        def process_and_add(
-            chemical_name_tokens: List[str],
-            source_dict: Dict[str, List[str]],
-            keyword_processor: KeywordProcessor,
-            max_edits: int,
-            source_type_name: str,
-        ) -> KeywordProcessor:
-            for chemical_name_token in chemical_name_tokens:
-                generated_errors = self.generate_substitution_dict(
-                    chemical_name_token, source_dict, max_edits=max_edits
-                )
+        corrections_map = build_substitution_corrections_map(max_edits=self._max_edits)
 
-                for error in generated_errors:
-                    if len(error) <= 2:
-                        continue
-                    if error in chemical_name_tokens:
-                        continue
+        for error_key, correct_token in corrections_map.items():
+            kp.add_keyword(error_key, correct_token)
 
-                    # OPTIMIZATION:
-                    # We add the "squashed" (no space) version of the error to the processor.
-                    # We store the correct token as the value.
-                    clean_error_key = error.replace(" ", "")
-                    keyword_processor.add_keyword(clean_error_key, chemical_name_token)
-
-            return keyword_processor
-
-        if not substitutions:
-            with open(CHEMICAL_NAME_TOKENS_PATH, "rb") as f:
-                chemical_name_tokens = json.load(f)
-
-            # Process OCR Substitutions
-            self.keyword_processor = process_and_add(
-                chemical_name_tokens,
-                OCR_SUBSTITUTIONS,
-                self.keyword_processor,
-                max_edits,
-                "OCR",
-            )
-
-            # Process Typo Substitutions
-            self.keyword_processor = process_and_add(
-                chemical_name_tokens,
-                KEYBOARD_NEIGHBOR_SUBSTITUTIONS,
-                self.keyword_processor,
-                max_edits,
-                "Typo",
-            )
-
-        else:
-            # Handle manual substitutions injection
-            for error, replacement_list in substitutions.items():
-                if replacement_list:
-                    clean_error_key = error.replace(" ", "")
-                    # Taking the first replacement as the primary one
-                    self.keyword_processor.add_keyword(
-                        clean_error_key, replacement_list[0]
-                    )
-
-    def generate_substitution_dict(
-        self, word: str, substitutions: Dict[str, List[str]], max_edits: int = 1
-    ) -> Set[str]:
-        results = set()
-        queue = deque([(word, 0)])
-        visited = {word}
-
-        while queue:
-            current_s, depth = queue.popleft()
-            if depth >= max_edits:
-                continue
-
-            for i in range(len(current_s)):
-                for key, replacements in substitutions.items():
-                    key_len = len(key)
-                    if i + key_len > len(current_s):
-                        continue
-
-                    if current_s[i : i + key_len] == key:
-                        for replacement in replacements:
-                            prefix = current_s[:i]
-                            suffix = current_s[i + key_len :]
-                            new_candidate = prefix + replacement + suffix
-
-                            if new_candidate not in visited:
-                                visited.add(new_candidate)
-                                results.add(new_candidate)
-                                queue.append((new_candidate, depth + 1))
-        return results
+        self.keyword_processor = kp
 
     def generate_candidates(
         self,
         text: str,
-        config: CorrectorConfig,  # Assuming this config has a 'max_substitutions' or similar
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
         """
         Generate candidates by finding all matches and applying combinations of them.
         """
+        if config is None:
+            config = CorrectorConfig()
+
+        if self.keyword_processor is None:
+            self._initialize_keyword_processor()
+
+        kp = self.keyword_processor
+        assert kp is not None, "Keyword processor should be initialized"
 
         # 1. SQUASH & MAP
         clean_chars = []
@@ -207,9 +136,7 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
 
         # 2. EXTRACT matches
         # matches = [('1,2-dichlorobenzene', 5, 12), ...]
-        raw_matches = self.keyword_processor.extract_keywords(
-            clean_text, span_info=True
-        )
+        raw_matches = kp.extract_keywords(clean_text, span_info=True)
 
         if not raw_matches:
             return
@@ -237,13 +164,14 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
         # 4. GENERATE COMBINATIONS
         # By default, FlashText returns non-overlapping matches, so we don't need
         # complex overlap checks for the raw output.
-
-        # Determine how many simultaneous corrections allowed.
-        # Default to all found if not specified in config.
-        max_simultaneous = 100
-
-        # We iterate from 1 up to max_simultaneous
-        for r in range(1, min(len(mapped_matches), max_simultaneous) + 1):
+        for r in range(
+            1,
+            min(
+                len(mapped_matches),
+                config.max_corrections_per_candidate - num_corrections_applied,
+            )
+            + 1,
+        ):
             # itertools.combinations produces tuples of matches: (match1, match2)
             for combo in itertools.combinations(mapped_matches, r):
                 # Sort combo by start index DESCENDING.
@@ -305,12 +233,6 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
                 return True
         return False
 
-    def add_substitution(self, original: str, replacements: List[str]) -> None:
-        """Add a custom substitution rule dynamically."""
-        if replacements:
-            clean_key = original.replace(" ", "")
-            self.keyword_processor.add_keyword(clean_key, replacements[0])
-
     @staticmethod
     def _positions_overlap(points: List[Tuple[int, str, List[str]]]) -> bool:
         """Check if any substitution positions overlap."""
@@ -322,159 +244,351 @@ class CharacterSubstitutionStrategy(CorrectionStrategy):
         return False
 
 
-class TokenSegmentationStrategy(CorrectionStrategy):
-    """
-    Strategy for repairing segmented/broken chemical tokens using a list of valid sub-word tokens.
-
-    It ignores 'noise' characters (hyphens, spaces, newlines) within a token
-    to see if the sequence forms a valid known token.
-
-    Example:
-    - Tokens: ["dodec", "one"]
-    - Input: "do-dec-2-one"
-    - Logic:
-      1. "do-dec" matches skeleton "dodec".
-      2. "one" matches skeleton "one".
-    - Result: "dodec-2-one" (The hyphens *between* tokens are preserved, hyphens *inside* tokens are removed).
-    """
-
+class CharacterInsertionStrategy(CorrectionStrategy):
     @property
     def name(self) -> str:
-        return "Token Segmentation"
+        return "Character Insertion"
 
     @property
     def correction_type(self) -> CorrectionType:
-        return CorrectionType.TOKEN_SEGMENTATION
+        return CorrectionType.CHARACTER_INSERTION
 
-    def __init__(self, min_token_length: int = 3):
-        """
-        min_token_length: Ignore tokens shorter than this to prevent aggressive
-                          glueing of small words like "at" or "in".
-        """
-        self.keyword_processor = KeywordProcessor()
-        self.keyword_processor.non_word_boundaries = set()
-        self.min_token_length = min_token_length
+    def __init__(self, max_edits: int = 1):
+        self.keyword_processor = None
+        self._max_edits = max_edits
 
-        # Load tokens from your path
-        try:
-            with open(CHEMICAL_NAME_TOKENS_PATH, "rb") as f:
-                chemical_tokens = json.load(f)
-            chemical_tokens = [ele for ele in chemical_tokens if len(ele) > 1]
-        except (NameError, FileNotFoundError):
-            # Fallback for testing if constant not defined
-            chemical_tokens = []
+    def _initialize_keyword_processor(self):
+        kp = KeywordProcessor()
+        kp.non_word_boundaries = set()
 
-        for token in chemical_tokens:
-            # We skip very short tokens to avoid false positives
-            # (e.g. glueing "a n" -> "an" might not be desired in text)
-            if len(token) < self.min_token_length:
-                continue
+        corrections_map = build_insertion_corrections_map(max_edits=self._max_edits)
 
-            # 1. Create the skeleton (what the token looks like stripped)
-            # Usually, the token list is already clean, so skeleton == token.
-            # But we normalize just in case the source list has noise.
-            skeleton = self._make_skeleton(token)
+        # Load pre-computed corrections map (fast path)
+        for error_key, correct_token in corrections_map.items():
+            kp.add_keyword(error_key, correct_token)
 
-            # 2. Add to FlashText
-            # Key: skeleton, Value: Clean Token
-            self.keyword_processor.add_keyword(skeleton, token)
-
-    def _make_skeleton(self, text: str) -> str:
-        """
-        Strip noise to create the search key.
-        We remove hyphens, spaces, newlines to allow matching across them.
-        """
-        return (
-            text.replace("-", "").replace("\n", "").replace(" ", "").replace("\xad", "")
-        )
+        self.keyword_processor = kp
 
     def generate_candidates(
-        self, text: str, config: CorrectorConfig
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
-        # 1. SQUASH & MAP
-        # Create a "clean view" of the text while remembering original positions
+        if config is None:
+            config = CorrectorConfig()
+
+        if self.keyword_processor is None:
+            self._initialize_keyword_processor()
+
+        kp = self.keyword_processor
+        assert kp is not None, "Keyword processor should be initialized"
+
         clean_chars = []
         idx_map = []
 
-        # Characters we want to ignore when searching for tokens
-        noise_chars = {"-", "\n", " ", "\xad", "\r", "\t"}
-
         for i, char in enumerate(text):
-            if char not in noise_chars:
+            if not char.isspace():
                 clean_chars.append(char)
                 idx_map.append(i)
 
         clean_text = "".join(clean_chars)
-
         if not clean_text:
             return
 
-        # 2. EXTRACT matches
-        # This finds valid tokens inside the squashed text
-        matches = self.keyword_processor.extract_keywords(clean_text, span_info=True)
-
-        if not matches:
+        raw_matches = kp.extract_keywords(clean_text, span_info=True)
+        if not raw_matches:
             return
 
         mapped_matches = []
-
-        # 3. CALCULATE original positions
-        for correct_token, start, end in matches:
+        for correct_token, start, end in raw_matches:
             orig_start_index = idx_map[start]
             last_char_idx = idx_map[end - 1]
             orig_end_index = last_char_idx + 1
 
-            original_snippet = text[orig_start_index:orig_end_index]
-
-            # CRITICAL: Only correct if the text is actually different.
-            # If input is "dodec" and token is "dodec", do nothing.
-            # If input is "do-dec", replace with "dodec".
-            if original_snippet == correct_token:
+            original_match_string = text[orig_start_index:orig_end_index]
+            if original_match_string == correct_token:
                 continue
 
-            match_data = {
-                "replacement": correct_token,
-                "start": orig_start_index,
-                "end": orig_end_index,
-                "original": original_snippet,
-            }
-            mapped_matches.append(match_data)
+            mapped_matches.append(
+                {
+                    "replacement": correct_token,
+                    "start": orig_start_index,
+                    "end": orig_end_index,
+                    "original": original_match_string,
+                }
+            )
 
-        # 4. APPLY corrections (Batch)
-        # Apply from end to start to maintain indices
-        if mapped_matches:
-            mapped_matches.sort(key=lambda x: x["start"], reverse=True)
-
-            new_text_chars = list(text)
-            corrections_list = []
-
-            last_start = float("inf")
-
-            for match in mapped_matches:
-                # Basic overlap check
-                if match["end"] > last_start:
+        for r in range(
+            1,
+            min(
+                len(mapped_matches),
+                config.max_corrections_per_candidate - num_corrections_applied,
+            )
+            + 1,
+        ):
+            for combo in itertools.combinations(mapped_matches, r):
+                sorted_combo = sorted(combo, key=lambda x: x["start"], reverse=True)
+                if self._check_overlap(sorted_combo):
                     continue
 
-                last_start = match["start"]
+                new_text_chars = list(text)
+                corrections_list: List[Correction] = []
 
-                # Perform substitution in the character list
-                new_text_chars[match["start"] : match["end"]] = list(
-                    match["replacement"]
-                )
+                for match in sorted_combo:
+                    new_text_chars[match["start"] : match["end"]] = list(
+                        match["replacement"]
+                    )
+                    corrections_list.append(
+                        Correction(
+                            position=match["start"],
+                            original=match["original"],
+                            replacement=match["replacement"],
+                            correction_type=self.correction_type,
+                            description=f"Insertion: '{match['original']}' → '{match['replacement']}'",
+                        )
+                    )
 
-                correction = Correction(
-                    position=match["start"],
-                    original=match["original"],
-                    replacement=match["replacement"],
-                    correction_type=self.correction_type,
-                    description=f"Merged: '{match['original']}' → '{match['replacement']}'",
-                )
-                corrections_list.append(correction)
-
-            if corrections_list:
                 corrected_text = "".join(new_text_chars)
                 corrections_list.sort(key=lambda x: x.position)
                 yield corrected_text, corrections_list
+
+    def _check_overlap(self, sorted_reverse_matches: List[Dict]) -> bool:
+        for i in range(len(sorted_reverse_matches) - 1):
+            later_match = sorted_reverse_matches[i]
+            earlier_match = sorted_reverse_matches[i + 1]
+            if earlier_match["end"] > later_match["start"]:
+                return True
+        return False
+
+
+class CharacterDeletionStrategy(CorrectionStrategy):
+    @property
+    def name(self) -> str:
+        return "Character Deletion"
+
+    @property
+    def correction_type(self) -> CorrectionType:
+        return CorrectionType.CHARACTER_DELETION
+
+    def __init__(self, max_edits: int = 1):
+        self.keyword_processor = None
+        self._max_edits = max_edits
+
+    def _initialize_keyword_processor(self):
+        kp = KeywordProcessor()
+        kp.non_word_boundaries = set()
+
+        corrections_map = build_deletion_corrections_map(max_edits=self._max_edits)
+
+        for error_key, correct_token in corrections_map.items():
+            kp.add_keyword(error_key, correct_token)
+
+        self.keyword_processor = kp
+
+    def generate_candidates(
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
+    ) -> Iterator[Tuple[str, List[Correction]]]:
+        if config is None:
+            config = CorrectorConfig()
+
+        if self.keyword_processor is None:
+            self._initialize_keyword_processor()
+
+        kp = self.keyword_processor
+        assert kp is not None, "Keyword processor should be initialized"
+
+        clean_chars = []
+        idx_map = []
+
+        for i, char in enumerate(text):
+            if not char.isspace():
+                clean_chars.append(char)
+                idx_map.append(i)
+
+        clean_text = "".join(clean_chars)
+        if not clean_text:
+            return
+
+        raw_matches = kp.extract_keywords(clean_text, span_info=True)
+        if not raw_matches:
+            return
+
+        mapped_matches = []
+        for correct_token, start, end in raw_matches:
+            orig_start_index = idx_map[start]
+            last_char_idx = idx_map[end - 1]
+            orig_end_index = last_char_idx + 1
+
+            original_match_string = text[orig_start_index:orig_end_index]
+            if original_match_string == correct_token:
+                continue
+
+            mapped_matches.append(
+                {
+                    "replacement": correct_token,
+                    "start": orig_start_index,
+                    "end": orig_end_index,
+                    "original": original_match_string,
+                }
+            )
+
+        for r in range(
+            1,
+            min(
+                len(mapped_matches),
+                config.max_corrections_per_candidate - num_corrections_applied,
+            )
+            + 1,
+        ):
+            for combo in itertools.combinations(mapped_matches, r):
+                sorted_combo = sorted(combo, key=lambda x: x["start"], reverse=True)
+                if self._check_overlap(sorted_combo):
+                    continue
+
+                new_text_chars = list(text)
+                corrections_list: List[Correction] = []
+
+                for match in sorted_combo:
+                    new_text_chars[match["start"] : match["end"]] = list(
+                        match["replacement"]
+                    )
+                    corrections_list.append(
+                        Correction(
+                            position=match["start"],
+                            original=match["original"],
+                            replacement=match["replacement"],
+                            correction_type=self.correction_type,
+                            description=f"Deletion: '{match['original']}' → '{match['replacement']}'",
+                        )
+                    )
+
+                corrected_text = "".join(new_text_chars)
+                corrections_list.sort(key=lambda x: x.position)
+                yield corrected_text, corrections_list
+
+    def _check_overlap(self, sorted_reverse_matches: List[Dict]) -> bool:
+        for i in range(len(sorted_reverse_matches) - 1):
+            later_match = sorted_reverse_matches[i]
+            earlier_match = sorted_reverse_matches[i + 1]
+            if earlier_match["end"] > later_match["start"]:
+                return True
+        return False
+
+
+class CharacterTranspositionStrategy(CorrectionStrategy):
+    @property
+    def name(self) -> str:
+        return "Character Transposition"
+
+    @property
+    def correction_type(self) -> CorrectionType:
+        return CorrectionType.CHARACTER_TRANSPOSITION
+
+    def __init__(self, max_edits: int = 1):
+        self.keyword_processor = None
+        self._max_edits = max_edits
+
+    def _initialize_keyword_processor(self):
+        kp = KeywordProcessor()
+        kp.non_word_boundaries = set()
+
+        corrections_map = build_transposition_corrections_map(max_edits=self._max_edits)
+
+        for error_key, correct_token in corrections_map.items():
+            kp.add_keyword(error_key, correct_token)
+
+        self.keyword_processor = kp
+
+    def generate_candidates(
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
+    ) -> Iterator[Tuple[str, List[Correction]]]:
+        if config is None:
+            config = CorrectorConfig()
+
+        if self.keyword_processor is None:
+            self._initialize_keyword_processor()
+
+        kp = self.keyword_processor
+        assert kp is not None, "Keyword processor should be initialized"
+
+        clean_chars = []
+        idx_map = []
+
+        for i, char in enumerate(text):
+            if not char.isspace():
+                clean_chars.append(char)
+                idx_map.append(i)
+
+        clean_text = "".join(clean_chars)
+        if not clean_text:
+            return
+
+        raw_matches = kp.extract_keywords(clean_text, span_info=True)
+        if not raw_matches:
+            return
+
+        mapped_matches = []
+        for correct_token, start, end in raw_matches:
+            orig_start_index = idx_map[start]
+            last_char_idx = idx_map[end - 1]
+            orig_end_index = last_char_idx + 1
+
+            original_match_string = text[orig_start_index:orig_end_index]
+            if original_match_string == correct_token:
+                continue
+
+            mapped_matches.append(
+                {
+                    "replacement": correct_token,
+                    "start": orig_start_index,
+                    "end": orig_end_index,
+                    "original": original_match_string,
+                }
+            )
+
+        for r in range(
+            1, min(len(mapped_matches), config.max_corrections_per_candidate) + 1
+        ):
+            for combo in itertools.combinations(mapped_matches, r):
+                sorted_combo = sorted(combo, key=lambda x: x["start"], reverse=True)
+                if self._check_overlap(sorted_combo):
+                    continue
+
+                new_text_chars = list(text)
+                corrections_list: List[Correction] = []
+
+                for match in sorted_combo:
+                    new_text_chars[match["start"] : match["end"]] = list(
+                        match["replacement"]
+                    )
+                    corrections_list.append(
+                        Correction(
+                            position=match["start"],
+                            original=match["original"],
+                            replacement=match["replacement"],
+                            correction_type=self.correction_type,
+                            description=f"Transposition: '{match['original']}' → '{match['replacement']}'",
+                        )
+                    )
+
+                corrected_text = "".join(new_text_chars)
+                corrections_list.sort(key=lambda x: x.position)
+                yield corrected_text, corrections_list
+
+    def _check_overlap(self, sorted_reverse_matches: List[Dict]) -> bool:
+        for i in range(len(sorted_reverse_matches) - 1):
+            later_match = sorted_reverse_matches[i]
+            earlier_match = sorted_reverse_matches[i + 1]
+            if earlier_match["end"] > later_match["start"]:
+                return True
+        return False
 
 
 class PunctuationRestorationStrategy(CorrectionStrategy):
@@ -509,7 +623,10 @@ class PunctuationRestorationStrategy(CorrectionStrategy):
     ]
 
     def generate_candidates(
-        self, text: str, config: CorrectorConfig
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
         """Generate candidates by restoring missing punctuation."""
         yield text, []  # Original
@@ -582,7 +699,10 @@ class BracketBalancingStrategy(CorrectionStrategy):
     ]
 
     def generate_candidates(
-        self, text: str, config: CorrectorConfig
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
         """Generate candidates by balancing brackets."""
         yield text, []  # Original
@@ -633,7 +753,10 @@ class LocantCorrectionStrategy(CorrectionStrategy):
         return CorrectionType.LOCANT_FIX
 
     def generate_candidates(
-        self, text: str, config: object
+        self,
+        text: str,
+        num_corrections_applied: int = 0,
+        config: Optional[CorrectorConfig] = None,
     ) -> Iterator[Tuple[str, List[Correction]]]:
         # We apply these patterns sequentially to the string.
         # Order matters: Fix characters -> Fix punctuation -> Fix formatting.

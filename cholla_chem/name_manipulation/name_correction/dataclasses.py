@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Dict, List, Optional
@@ -23,11 +24,22 @@ class CorrectorConfig:
     """
 
     max_candidates: int = 100
-    max_corrections_per_candidate: int = 5
+    max_corrections_per_candidate: int = 3
     min_score_threshold: float = 0.1
     enable_locant_correction: bool = True
+
     enable_character_substitution: bool = True
-    max_character_substitution_edits: int = 1
+    max_character_substitution_edits_per_morpheme: int = 1
+
+    enable_character_insertion: bool = True
+    max_character_insertion_edits_per_morpheme: int = 1
+
+    enable_character_deletion: bool = True
+    max_character_deletion_edits_per_morpheme: int = 1
+
+    enable_transposition: bool = True
+    max_transposition_edits_per_morpheme: int = 1
+
     enable_punctuation_restoration: bool = False
     enable_bracket_balancing: bool = False
     custom_substitutions: Dict[str, List[str]] = field(default_factory=dict)
@@ -144,6 +156,7 @@ class CorrectionType(Enum):
     CHARACTER_SUBSTITUTION = auto()
     CHARACTER_INSERTION = auto()
     CHARACTER_DELETION = auto()
+    CHARACTER_TRANSPOSITION = auto()
     PUNCTUATION_RESTORATION = auto()
     STEREOCHEMISTRY_FIX = auto()
     BRACKET_BALANCING = auto()
