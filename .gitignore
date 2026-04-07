@@ -16,6 +16,7 @@
 !pyproject.toml
 !requirements.txt
 !.pre-commit-config.yaml
+!ligand_smiles_data_complete.csv
 
 # Documentation
 !docs/
