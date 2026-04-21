@@ -9,8 +9,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from cholla_chem.resolvers.pubchem_resolver import (
-    pubchem_resolver_batch as pcr,  # noqa: E402
+from cholla_chem.resolvers.pubchem_resolver import (  # noqa: E402
+    pubchem_resolver_batch as pcr,
 )
 
 
