@@ -113,9 +113,9 @@ def test_multiprocessing():
     """py2opsin should safely work when run with multiprocessing"""
     with multiprocessing.Pool(2) as pool:
         res = pool.map(_f, [("methanol", 0), ("ethanol", 1)])
-    assert [item.outputs[0] for item in res] == ["CO", "C(C)O"]
-    assert [item.errors[0] for item in res] == ["", ""]
-    assert [item.returncode for item in res] == [0, 0]
+    assert [item["outputs"][0] for item in res] == ["CO", "C(C)O"]
+    assert [item["errors"][0] for item in res] == ["", ""]
+    assert [item["returncode"] for item in res] == [0, 0]
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -126,14 +126,14 @@ def test_name_to_smiles():
     for test_info in CHEMICAL_INFO:
         opsin_smiles = run_opsin(test_info["name"])
 
-        assert opsin_smiles.outputs[0] == test_info["smiles"]
-        assert opsin_smiles.errors[0] == test_info["errors"]
-        assert opsin_smiles.returncode == 0
+        assert opsin_smiles["outputs"][0] == test_info["smiles"]
+        assert opsin_smiles["errors"][0] == test_info["errors"]
+        assert opsin_smiles["returncode"] == 0
 
     test_list_smiles = run_opsin(CHEMICAL_NAMES)
-    assert test_list_smiles.outputs == list(CHEMICAL_SMILES)
-    assert test_list_smiles.errors == list(CHEMICAL_ERRORS)
-    assert test_list_smiles.returncode == 0
+    assert test_list_smiles["outputs"] == list(CHEMICAL_SMILES)
+    assert test_list_smiles["errors"] == list(CHEMICAL_ERRORS)
+    assert test_list_smiles["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -143,14 +143,14 @@ def test_name_to_extendedsmiles():
     """
     for test_info in CHEMICAL_INFO:
         opsin_smiles = run_opsin(test_info["name"], output_format="ExtendedSMILES")
-        assert opsin_smiles.outputs[0] == test_info["extendedsmiles"]
-        assert opsin_smiles.errors[0] == test_info["errors"]
-        assert opsin_smiles.returncode == 0
+        assert opsin_smiles["outputs"][0] == test_info["extendedsmiles"]
+        assert opsin_smiles["errors"][0] == test_info["errors"]
+        assert opsin_smiles["returncode"] == 0
 
     test_list_extendedsmi = run_opsin(CHEMICAL_NAMES, output_format="ExtendedSMILES")
-    assert test_list_extendedsmi.outputs == list(CHEMICAL_EXTENDEDSMILES)
-    assert test_list_extendedsmi.errors == list(CHEMICAL_ERRORS)
-    assert test_list_extendedsmi.returncode == 0
+    assert test_list_extendedsmi["outputs"] == list(CHEMICAL_EXTENDEDSMILES)
+    assert test_list_extendedsmi["errors"] == list(CHEMICAL_ERRORS)
+    assert test_list_extendedsmi["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -160,14 +160,14 @@ def test_name_to_stdinchi():
     """
     for test_info in CHEMICAL_INFO:
         opsin_smiles = run_opsin(test_info["name"], output_format="StdInChI")
-        assert opsin_smiles.outputs[0] == test_info["stdinchi"]
-        assert opsin_smiles.errors[0] == test_info["errors"]
-        assert opsin_smiles.returncode == 0
+        assert opsin_smiles["outputs"][0] == test_info["stdinchi"]
+        assert opsin_smiles["errors"][0] == test_info["errors"]
+        assert opsin_smiles["returncode"] == 0
 
     test_list_stdinchis = run_opsin(CHEMICAL_NAMES, output_format="StdInChI")
-    assert test_list_stdinchis.outputs == list(CHEMICAL_STDINCHIS)
-    assert test_list_stdinchis.errors == list(CHEMICAL_ERRORS)
-    assert test_list_stdinchis.returncode == 0
+    assert test_list_stdinchis["outputs"] == list(CHEMICAL_STDINCHIS)
+    assert test_list_stdinchis["errors"] == list(CHEMICAL_ERRORS)
+    assert test_list_stdinchis["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -177,14 +177,14 @@ def test_name_to_stdinchikey():
     """
     for test_info in CHEMICAL_INFO:
         opsin_smiles = run_opsin(test_info["name"], output_format="StdInChIKey")
-        assert opsin_smiles.outputs[0] == test_info["stdinchikey"]
-        assert opsin_smiles.errors[0] == test_info["errors"]
-        assert opsin_smiles.returncode == 0
+        assert opsin_smiles["outputs"][0] == test_info["stdinchikey"]
+        assert opsin_smiles["errors"][0] == test_info["errors"]
+        assert opsin_smiles["returncode"] == 0
 
     test_list_stdinchikeys = run_opsin(CHEMICAL_NAMES, output_format="StdInChIKey")
-    assert test_list_stdinchikeys.outputs == list(CHEMICAL_STDINCHIKEYS)
-    assert test_list_stdinchikeys.errors == list(CHEMICAL_ERRORS)
-    assert test_list_stdinchikeys.returncode == 0
+    assert test_list_stdinchikeys["outputs"] == list(CHEMICAL_STDINCHIKEYS)
+    assert test_list_stdinchikeys["errors"] == list(CHEMICAL_ERRORS)
+    assert test_list_stdinchikeys["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -194,14 +194,14 @@ def test_name_to_inchi_fixedh():
     """
     for test_info in CHEMICAL_INFO:
         opsin_inchi = run_opsin(test_info["name"], output_format="InChI")
-        assert opsin_inchi.outputs[0] == test_info["inchi_fixedH"]
-        assert opsin_inchi.errors[0] == test_info["errors"]
-        assert opsin_inchi.returncode == 0
+        assert opsin_inchi["outputs"][0] == test_info["inchi_fixedH"]
+        assert opsin_inchi["errors"][0] == test_info["errors"]
+        assert opsin_inchi["returncode"] == 0
 
     test_list_inchi = run_opsin(CHEMICAL_NAMES, output_format="InChI")
-    assert test_list_inchi.outputs == list(CHEMICAL_INCHI_FIXEDH)
-    assert test_list_inchi.errors == list(CHEMICAL_ERRORS)
-    assert test_list_inchi.returncode == 0
+    assert test_list_inchi["outputs"] == list(CHEMICAL_INCHI_FIXEDH)
+    assert test_list_inchi["errors"] == list(CHEMICAL_ERRORS)
+    assert test_list_inchi["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -218,9 +218,9 @@ def test_allow_multiple_options():
         wildcard_radicals=True,
     )
 
-    assert test_inchi.outputs[0] == "InChI=1/C2H6/c1-2/h1-2H3"
-    assert test_inchi.errors[0] == ""
-    assert test_inchi.returncode == 0
+    assert test_inchi["outputs"][0] == "InChI=1/C2H6/c1-2/h1-2H3"
+    assert test_inchi["errors"][0] == ""
+    assert test_inchi["returncode"] == 0
 
 
 @pytest.mark.skipif(not _has_java(), reason="Java is not installed or not on PATH")
@@ -237,9 +237,9 @@ def test_list_with_errors():
         "",
     ]
     smiles_list = run_opsin(list_with_errors)
-    assert smiles_list.outputs == correct_list
-    assert smiles_list.errors == errors_list
-    assert smiles_list.returncode == 0
+    assert smiles_list["outputs"] == correct_list
+    assert smiles_list["errors"] == errors_list
+    assert smiles_list["returncode"] == 0
 
 
 def test_name_to_smiles_opsin_success(monkeypatch):
