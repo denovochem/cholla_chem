@@ -1,5 +1,5 @@
 # cholla_chem
-[![version](https://img.shields.io/github/v/release/denovochem/cholla_chem)](https://github.com/denovochem/cholla_chem/releases)
+[![PyPI version](https://badge.fury.io/py/cholla_chem.svg)](https://badge.fury.io/py/cholla_chem)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/denovochem/cholla_chem/graphs/commit-activity)
 [![License](https://img.shields.io/pypi/l/PubChemPy)](https://github.com/denovochem/cholla_chem/blob/main/LICENSE)
 [![Run Tests](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/tests.yml)
@@ -31,7 +31,13 @@ When resolvers disagree on the SMILES for a given compound, a variety of SMILES 
 
 ## Installation
 
-Install cholla_chem with pip directly from this repo:
+Install cholla_chem with pip:
+
+```shell
+pip install cholla_chem
+```
+
+Alternatively, pip install directly from the repo:
 
 ```shell
 pip install git+https://github.com/denovochem/cholla_chem.git

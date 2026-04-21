@@ -66,6 +66,8 @@ def configure_logging(
         env = os.getenv("loguru_level", "default").lower()
         level = LOG_LEVELS.get(env, LOG_LEVELS["default"])
 
+    enable_library_logging()
+
     # Configure exception hook for uncaught exceptions
     def _handle_exception(
         exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any
@@ -143,4 +145,12 @@ def enable_library_logging() -> None:
     logger.enable("cholla_chem")
 
 
-__all__ = ["logger", "configure_logging"]
+disable_library_logging()
+
+
+__all__ = [
+    "logger",
+    "configure_logging",
+    "disable_library_logging",
+    "enable_library_logging",
+]
