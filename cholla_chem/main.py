@@ -27,6 +27,9 @@ from cholla_chem.resolvers.opsin_resolver.opsin_resolver import name_to_smiles_o
 from cholla_chem.resolvers.pubchem_resolver.pubchem_resolver import (
     name_to_smiles_pubchem,
 )
+from cholla_chem.resolvers.pubchem_resolver.pubchem_resolver_batch import (
+    name_to_smiles_pubchem_batch,
+)
 from cholla_chem.resolvers.structural_formula_resolver.structural_formula_resolver import (
     name_to_smiles_structural_formula,
 )
@@ -159,9 +162,40 @@ class OpsinNameResolver(ChemicalNameResolver):
         return resolved_names, failure_message_dict
 
 
+class PubChemNameResolverBatch(ChemicalNameResolver):
+    """
+    Resolver using PubChem via PubChemPy.
+    This resolver is for batch processing multiple names at once.
+    """
+
+    def __init__(
+        self,
+        resolver_name: str,
+        resolver_weight: float = 2,
+        rate_limit_time: float = 10,
+    ):
+        super().__init__(
+            "pubchem",
+            resolver_name,
+            resolver_weight,
+            requires_internet=True,
+            rate_limit_time=rate_limit_time,
+        )
+
+    def name_to_smiles(
+        self, compound_name_list: List[str]
+    ) -> Tuple[Dict[str, str], Dict[str, str]]:
+        """
+        Convert chemical names to SMILES using pubchem.
+        """
+        resolved_names = name_to_smiles_pubchem_batch(compound_name_list)
+        return resolved_names, {}
+
+
 class PubChemNameResolver(ChemicalNameResolver):
     """
     Resolver using PubChem via PubChemPy.
+    This resolver is for processing one name at a time.
     """
 
     def __init__(
@@ -691,7 +725,7 @@ def resolve_compounds_to_smiles(
     """
     if not resolvers_list:
         resolvers_list = [
-            PubChemNameResolver("pubchem_default"),
+            PubChemNameResolverBatch("pubchem_default"),
             OpsinNameResolver("opsin_default"),
             ManualNameResolver("manual_default"),
             StructuralFormulaNameResolver("structural_formula_default"),

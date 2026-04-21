@@ -10,6 +10,7 @@ from cholla_chem.main import (
     ManualNameResolver,
     OpsinNameResolver,
     PubChemNameResolver,
+    PubChemNameResolverBatch,
     StructuralFormulaNameResolver,
     resolve_compounds_to_smiles,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "ChemicalNameResolver",
     "ManualNameResolver",
     "OpsinNameResolver",
+    "PubChemNameResolverBatch",
     "PubChemNameResolver",
     "StructuralFormulaNameResolver",
     "CIRpyNameResolver",

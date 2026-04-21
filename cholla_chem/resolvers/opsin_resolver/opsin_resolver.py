@@ -2,9 +2,8 @@ import os
 import subprocess
 import tempfile
 from contextlib import contextmanager
-from dataclasses import dataclass
 from importlib import resources
-from typing import Dict, Iterator, List, Sequence, Tuple, Union
+from typing import Dict, Iterator, List, Sequence, Tuple, TypedDict, Union
 
 from cholla_chem.utils.logging_config import logger
 
@@ -15,8 +14,7 @@ except ImportError:
     from typing_extensions import Literal
 
 
-@dataclass(frozen=True)
-class OpsinResult:
+class OpsinResult(TypedDict):
     outputs: List[str]
     errors: List[str]
     returncode: int
@@ -52,6 +50,38 @@ def run_opsin(
     wildcard_radicals: bool = False,
     failure_analysis: bool = False,
 ) -> OpsinResult:
+    """
+    Run the OPSIN CLI (via the packaged OPSIN JAR) to resolve chemical name(s) into a chosen identifier format.
+
+    Args:
+        chemical_name (Union[str, Sequence[str]]): A single chemical name, or a sequence of names. Each name is
+            sanitized by stripping newline characters before being written to a temporary input file.
+        output_format (Literal["SMILES", "ExtendedSMILES", "InChI", "StdInChI", "StdInChIKey"]): The OPSIN
+            output format to request.
+        allow_acid (bool): If True, enable OPSIN's acid interpretation mode.
+        allow_radicals (bool): If True, enable OPSIN's radical interpretation mode.
+        allow_bad_stereo (bool): If True, allow OPSIN to ignore uninterpretable stereochemistry.
+        wildcard_radicals (bool): If True, output radicals as wildcards.
+        failure_analysis (bool): If True, request OPSIN's detailed failure analysis output.
+
+    Returns:
+        OpsinResult: A result object with fields:
+            - outputs: One output string per input name (possibly empty on failure).
+            - errors: One error string per input name (empty when the corresponding output is non-empty).
+            - returncode: The subprocess return code from the underlying OPSIN invocation.
+
+    Raises:
+        RuntimeError: If `output_format` is not one of the supported values.
+
+    Note:
+        This function shells out to `java -jar <opsin-cli-...jar>` and therefore requires Java to be available on
+        the system PATH.
+        The input is passed via a temporary file and the file is removed in a `finally` block.
+        OPSIN emits per-input failures as blank lines in stdout; this function aligns those blank outputs with
+        corresponding stderr lines.
+        If an unexpected exception occurs while running OPSIN, an `OpsinResult` is returned with empty outputs and
+        a repeated error message for each input rather than re-raising the exception.
+    """
     with opsin_jar_path() as jar_fpath:
         arg_list = ["java", "-jar", jar_fpath]
 
@@ -207,8 +237,8 @@ def name_to_smiles_opsin(
         wildcard_radicals=wildcard_radicals,
     )
 
-    smiles_strings = result.outputs
-    failure_messages = result.errors
+    smiles_strings = result["outputs"]
+    failure_messages = result["errors"]
 
     if len(smiles_strings) != len(compound_name_list) or len(failure_messages) != len(
         compound_name_list
