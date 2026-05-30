@@ -3,7 +3,13 @@ cholla_chem supports Python versions >=3.10. Java 8+ is required to run OPSIN.
 
 ## Installation Option #1: Use pip (recommended)
 
-Install cholla_chem with pip directly from the github repo:
+Install cholla_chem with pip:
+
+```shell
+pip install cholla_chem
+```
+
+Alternatively, pip install directly from the repo:
 
 ```shell
 pip install git+https://github.com/denovochem/cholla_chem.git

@@ -1,8 +1,13 @@
-Install cholla_chem with pip directly from the github repo:
+Install cholla_chem with pip:
+
+```shell
+pip install cholla_chem
+```
+
+Alternatively, pip install directly from the repo:
 
 ```shell
 pip install git+https://github.com/denovochem/cholla_chem.git
-
 ```
 
 
