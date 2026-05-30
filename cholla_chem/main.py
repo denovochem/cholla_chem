@@ -729,7 +729,7 @@ def resolve_compounds_to_smiles(
         Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]: A dictionary mapping each compound to its SMILES representation and resolvers, or a simple dictionary mapping each compound to it's selected SMILES representation.
     """
     if not resolvers_list:
-        if len(compounds_list) > 5:
+        if len(compounds_list) > 10:
             resolvers_list = [
                 PubChemNameResolverBatch("pubchem_batch_default"),
                 OpsinNameResolver("opsin_default"),

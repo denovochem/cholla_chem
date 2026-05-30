@@ -38,7 +38,7 @@ def canonicalize_smiles(
             if canonicalize_tautomer:
                 m = tautomer_enumerator.Canonicalize(m)
             if remove_mapping:
-                [a.SetAtomMapNum(0) for a in m.GetAtoms()]
+                [a.SetAtomMapNum(0) for a in m.GetAtoms()]  # type: ignore[func-returns-value]
             canonical_smiles_string = str(
                 Chem.MolToSmiles(m, canonical=True, isomericSmiles=isomeric)
             )
