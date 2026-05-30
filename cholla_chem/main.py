@@ -202,7 +202,7 @@ class PubChemNameResolver(ChemicalNameResolver):
         self,
         resolver_name: str,
         resolver_weight: float = 2,
-        rate_limit_time: float = 10,
+        rate_limit_time: float = 0.25,
     ):
         super().__init__(
             "pubchem",
@@ -231,7 +231,7 @@ class CIRpyNameResolver(ChemicalNameResolver):
         self,
         resolver_name: str,
         resolver_weight: float = 1,
-        rate_limit_time: float = 10,
+        rate_limit_time: float = 1,
     ):
         super().__init__(
             "cirpy",
@@ -261,7 +261,7 @@ class ChemSpiPyResolver(ChemicalNameResolver):
         resolver_name: str,
         chemspider_api_key: str,
         resolver_weight: float = 3,
-        rate_limit_time: float = 10,
+        rate_limit_time: float = 5,
     ):
         super().__init__(
             "chemspipy",
@@ -493,13 +493,18 @@ def resolve_compounds_using_resolvers(
     for resolver in resolvers_list:
         out = {}
         additional_info = {}
+        last_request_duration = 0.0
         for i in range(0, len(compounds_list), batch_size):
+            if resolver.rate_limit_time and i != 0:
+                sleep_time = resolver.rate_limit_time - last_request_duration
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
             chunk = compounds_list[i : i + batch_size]
+            start_time = time.time()
             out_chunk, additional_info_chunk = resolver.name_to_smiles(chunk)
+            last_request_duration = time.time() - start_time
             out.update(out_chunk)
             additional_info.update(additional_info_chunk)
-            if resolver.rate_limit_time:
-                time.sleep(resolver.rate_limit_time)
         resolvers_out_dict[resolver.resolver_name] = {
             "out": out,
             "additional_info": additional_info,
@@ -724,13 +729,22 @@ def resolve_compounds_to_smiles(
         Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]: A dictionary mapping each compound to its SMILES representation and resolvers, or a simple dictionary mapping each compound to it's selected SMILES representation.
     """
     if not resolvers_list:
-        resolvers_list = [
-            PubChemNameResolverBatch("pubchem_default"),
-            OpsinNameResolver("opsin_default"),
-            ManualNameResolver("manual_default"),
-            StructuralFormulaNameResolver("structural_formula_default"),
-            InorganicShorthandNameResolver("inorganic_shorthand_default"),
-        ]
+        if len(compounds_list) > 5:
+            resolvers_list = [
+                PubChemNameResolverBatch("pubchem_batch_default"),
+                OpsinNameResolver("opsin_default"),
+                ManualNameResolver("manual_default"),
+                StructuralFormulaNameResolver("structural_formula_default"),
+                InorganicShorthandNameResolver("inorganic_shorthand_default"),
+            ]
+        else:
+            resolvers_list = [
+                PubChemNameResolver("pubchem_default"),
+                OpsinNameResolver("opsin_default"),
+                ManualNameResolver("manual_default"),
+                StructuralFormulaNameResolver("structural_formula_default"),
+                InorganicShorthandNameResolver("inorganic_shorthand_default"),
+            ]
 
     if isinstance(compounds_list, str):
         compounds_list = [compounds_list]

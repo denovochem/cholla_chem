@@ -1,6 +1,6 @@
 cholla_chem uses a variety of resolvers to convert chemical names to SMILES. Resolvers can be initialized and passed to the function resolve_compounds_to_smiles as a list to customize how compounds are resolved to SMILES. If no resolvers are passed, the following default resolvers will be used:
 
-- PubChemNameResolver('pubchem_default', resolver_weight=2),
+- PubChemNameResolver('pubchem_default', resolver_weight=2) or PubChemNameResolverBatch('pubchem_batch_default', resolver_weight=2) if more than 10 compounds are submitted,
 - OpsinNameResolver('opsin_default', resolver_weight=3),
 - ManualNameResolver('manual_default', resolver_weight=10),
 - StructuralFormulaNameResolver('structural_formula_default', resolver_weight=2)
@@ -79,7 +79,7 @@ resolved_smiles = resolve_compounds_to_smiles(
 
 
 ## PubChemNameResolver
-This resolver uses [PubChem](https://pubchem.ncbi.nlm.nih.gov/) for name-to-SMILES conversion. The code is adapted from [PubChemPy](https://github.com/mcs07/PubChemPy) to implement batching with the Power User Gateway XML schema to significantly speed up SMILES resolutions.
+This resolver uses [PubChem](https://pubchem.ncbi.nlm.nih.gov/) and the PUG REST API for name-to-SMILES conversion. The code is adapted from [PubChemPy](https://github.com/mcs07/PubChemPy). This resolver is recommended over `PubChemNameResolverBatch` for resolving small numbers of compounds (<10-ish).
 
 Default weight for 'weighted' SMILES selection method: 2
 
@@ -88,6 +88,26 @@ from cholla_chem import PubChemNameResolver
 
 pubchem_resolver = PubChemNameResolver(
     resolver_name='pubchem', 
+    resolver_weight=2
+)
+
+resolved_smiles = resolve_compounds_to_smiles(
+    compounds_list=['acetone'], 
+    resolvers_list=[pubchem_resolver]
+)
+```
+
+
+## PubChemNameResolverBatch
+This resolver uses [PubChem](https://pubchem.ncbi.nlm.nih.gov/) for name-to-SMILES conversion. The code is adapted from [PubChemPy](https://github.com/mcs07/PubChemPy) to implement batching with the Power User Gateway XML schema to significantly speed up SMILES resolutions. This resolver is recommended over `PubChemNameResolver` for resolving large numbers of compounds (>10-ish).
+
+Default weight for 'weighted' SMILES selection method: 2
+
+```
+from cholla_chem import PubChemNameResolverBatch
+
+pubchem_resolver = PubChemNameResolverBatch(
+    resolver_name='pubchem_batch', 
     resolver_weight=2
 )
 
