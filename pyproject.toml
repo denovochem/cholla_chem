@@ -48,6 +48,10 @@ dependencies = {file = ["requirements.txt"]}
 [tool.mypy]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "rdkit.*"
+follow_imports = "skip"
+
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
