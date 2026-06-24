@@ -2,7 +2,8 @@ import shutil
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from rdkit import RDLogger
 
@@ -21,6 +22,9 @@ from cholla_chem.resolvers.chemspipy_resolver import name_to_smiles_chemspipy
 from cholla_chem.resolvers.cirpy_resolver import name_to_smiles_cirpy
 from cholla_chem.resolvers.inorganic_resolver.inorganic_resolver import (
     name_to_smiles_inorganic_shorthand,
+)
+from cholla_chem.resolvers.lookup_resolver.sqlite_lookup_resolver import (
+    name_to_smiles_sqlite_lookup,
 )
 from cholla_chem.resolvers.manual_resolver import name_to_smiles_manual
 from cholla_chem.resolvers.opsin_resolver.opsin_resolver import name_to_smiles_opsin
@@ -219,6 +223,46 @@ class PubChemNameResolver(ChemicalNameResolver):
         Convert chemical names to SMILES using pubchem.
         """
         resolved_names = name_to_smiles_pubchem(compound_name_list)
+        return resolved_names, {}
+
+
+class SQLiteLookupNameResolver(ChemicalNameResolver):
+    """
+    Resolver using a local SQLite database.
+
+    This resolver does not require an internet connection and looks up names
+    against a pre-built SQLite database containing compounds and synonyms.
+    """
+
+    def __init__(
+        self,
+        resolver_name: str,
+        db_path: Union[str, Path],
+        resolver_weight: float = 4.0,
+        match_mode: str = "exact",
+        rate_limit_time: float | None = None,
+    ):
+        super().__init__(
+            "sqlite_lookup",
+            resolver_name,
+            resolver_weight,
+            requires_internet=False,
+            rate_limit_time=rate_limit_time,
+        )
+        self._db_path = db_path
+        self._match_mode = match_mode
+
+    def name_to_smiles(
+        self, compound_name_list: List[str]
+    ) -> Tuple[Dict[str, str], Dict[str, str]]:
+        """
+        Convert chemical names to SMILES using the local SQLite database.
+        """
+        resolved_names = name_to_smiles_sqlite_lookup(
+            compound_name_list,
+            self._db_path,
+            match_mode=self._match_mode,
+        )
         return resolved_names, {}
 
 
