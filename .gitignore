@@ -86,6 +86,9 @@
 !cholla_chem/resolvers/structural_formula_resolver/__init__.py
 !cholla_chem/resolvers/structural_formula_resolver/structural_formula_resolver.py
 !cholla_chem/resolvers/structural_formula_resolver/structural_formula_resolver_tokens.py
+!cholla_chem/resolvers/lookup_resolver/
+!cholla_chem/resolvers/lookup_resolver/__init__.py
+!cholla_chem/resolvers/lookup_resolver/sqlite_lookup_resolver.py
 !cholla_chem/smiles_selector.py
 !cholla_chem/utils/
 !cholla_chem/utils/__init__.py
@@ -112,6 +115,7 @@
 !tests/test_split_name_name_manipulation.py
 !tests/test_structural_formula_resolver.py
 !tests/test_ocr_map_consistency.py
+!tests/test_sqlite_lookup_resolver.py
 
 # Examples
 !examples/

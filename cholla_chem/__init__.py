@@ -11,6 +11,7 @@ from cholla_chem.main import (
     OpsinNameResolver,
     PubChemNameResolver,
     PubChemNameResolverBatch,
+    SQLiteLookupNameResolver,
     StructuralFormulaNameResolver,
     resolve_compounds_to_smiles,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "OpsinNameResolver",
     "PubChemNameResolverBatch",
     "PubChemNameResolver",
+    "SQLiteLookupNameResolver",
     "StructuralFormulaNameResolver",
     "CIRpyNameResolver",
     "InorganicShorthandNameResolver",
