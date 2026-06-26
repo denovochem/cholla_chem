@@ -96,10 +96,10 @@ def name_to_smiles_sqlite_lookup(
                 chunk = normalized_names[i : i + _SQLITE_MAX_VARIABLES]
                 placeholders = ",".join("?" * len(chunk))
                 query = (
-                    f"SELECT DISTINCT s.synonym_text, c.smiles "
+                    f"SELECT s.synonym_text, c.smiles "
                     f"FROM compounds c "
                     f"JOIN synonyms s ON c.cid = s.cid "
-                    f"WHERE LOWER(s.synonym_text) IN ({placeholders})"
+                    f"WHERE s.synonym_text IN ({placeholders})"
                 )
                 for db_synonym, smiles in conn.execute(query, chunk).fetchall():
                     norm_db_synonym = normalize_name(db_synonym)
