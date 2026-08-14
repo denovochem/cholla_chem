@@ -1,387 +1,545 @@
-# import os
-# import sys
-
-# import pytest
-
-# # Ensure project root is on sys.path so we can import cholla_chem modules
-# PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-# if PROJECT_ROOT not in sys.path:
-#     sys.path.insert(0, PROJECT_ROOT)
-
-# from cholla_chem.main import (  # noqa: E402
-#     ChemicalNameResolver,
-#     assemble_compounds_resolution_dict,
-#     assemble_split_compounds_resolution_dict,
-#     clean_strings_and_return_mapping,
-#     get_resolvers_weight_dict,
-#     resolve_compounds_to_smiles,
-#     resolve_compounds_using_resolvers,
-#     select_smiles_with_criteria,
-#     split_compounds_on_delimiters_and_return_mapping,
-# )
-
-
-# class DummyResolver(ChemicalNameResolver):
-#     """Simple in-memory resolver used for orchestration tests."""
-
-#     def __init__(self, resolver_name, mapping, info_mapping=None, weight=1.0):
-#         super().__init__("dummy", resolver_name, weight)
-#         self._mapping = mapping
-#         self._info_mapping = info_mapping or {}
-
-#     def name_to_smiles(self, compound_name_list):
-#         out = {name: self._mapping.get(name, "") for name in compound_name_list}
-#         info = {name: self._info_mapping.get(name, "") for name in compound_name_list}
-#         # Drop empty info messages, mimicking behavior of real resolvers
-#         info = {k: v for k, v in info.items() if v}
-#         return out, info
-
-
-# def test_clean_strings_and_return_mapping_basic(monkeypatch):
-#     """clean_strings_and_return_mapping should call clean_strings on each item and map originals to cleaned."""
-
-#     from cholla_chem import main as main_module
-
-#     calls = []
-
-#     def fake_clean_strings(s):
-#         calls.append(s)
-#         return s.strip().lower()
-
-#     monkeypatch.setattr(
-#         "cholla_chem.utils.string_utils.clean_strings",
-#         fake_clean_strings,
-#         raising=True,
-#     )
-
-#     original = [" Ethanol ", "WATER"]
-#     cleaned_list, mapping = clean_strings_and_return_mapping(original)
-
-#     assert calls == original
-#     assert cleaned_list == ["ethanol", "water"]
-#     assert mapping == {" Ethanol ": "ethanol", "WATER": "water"}
-
-
-# def test_get_resolvers_weight_dict_uses_resolver_name_and_weight():
-#     """get_resolvers_weight_dict should pull weights from resolver instances."""
-
-#     r1 = DummyResolver("r1", {}, weight=1.5)
-#     r2 = DummyResolver("r2", {}, weight=3.0)
-
-#     result = get_resolvers_weight_dict([r1, r2])
-
-#     assert result == {"r1": 1.5, "r2": 3.0}
-
-
-# def test_split_compounds_on_delimiters_and_return_mapping_uses_helper(monkeypatch):
-#     """split_compounds_on_delimiters_and_return_mapping should call get_delimiter_split_dict for each compound."""
-
-#     seen = []
-
-#     def fake_get_delimiter_split_dict(compound, current_dict):
-#         seen.append(compound)
-#         # For testing, pretend every compound splits into two parts
-#         split_parts = [f"{compound}_a", f"{compound}_b"]
-#         current_dict[compound] = split_parts
-#         return current_dict, split_parts
-
-#     monkeypatch.setattr(
-#         "cholla_chem.name_manipulation.split_names.get_delimiter_split_dict",
-#         fake_get_delimiter_split_dict,
-#         raising=True,
-#     )
-
-#     compounds = ["A", "B"]
-#     all_names, split_dict = split_compounds_on_delimiters_and_return_mapping(compounds)
-
-#     # Helper should be called once per original compound
-#     assert seen == compounds
-
-#     # All originals plus unique split parts should be present
-#     assert set(all_names) == {"A", "B", "A_a", "A_b", "B_a", "B_b"}
-
-#     # Mapping should contain the split parts we defined
-#     assert split_dict == {
-#         "A": ["A_a", "A_b"],
-#         "B": ["B_a", "B_b"],
-#     }
-
-
-# def test_resolve_compounds_using_resolvers_batches_and_collects_info():
-#     """resolve_compounds_using_resolvers should iterate over resolvers and batches, returning out and info dicts."""
-
-#     # Two dummy resolvers with different names and mappings
-#     r1 = DummyResolver("res1", {"a": "S_a1", "b": "S_b1"}, {"a": "i1"})
-#     r2 = DummyResolver("res2", {"a": "S_a2"}, {"b": "i2"})
-
-#     compounds = ["a", "b"]
-#     # Use small batch size to exercise batching loop; behavior should be identical
-#     out = resolve_compounds_using_resolvers(compounds, [r1, r2], batch_size=1)
-
-#     assert set(out.keys()) == {"res1", "res2"}
-#     assert out["res1"]["out"] == {"a": "S_a1", "b": "S_b1"}
-#     assert out["res1"]["additional_info"] == {"a": "i1"}
-#     assert out["res2"]["out"] == {"a": "S_a2", "b": ""}
-#     assert out["res2"]["additional_info"] == {"b": "i2"}
-
-
-# def test_assemble_compounds_resolution_dict_uses_canonical_smiles(monkeypatch):
-#     """assemble_compounds_resolution_dict should canonicalize SMILES and group resolvers per canonical form."""
-
-#     def fake_canonicalize(smiles):
-#         # Normalize to uppercase as a simple canonicalization
-#         return smiles.upper() if smiles else ""
-
-#     monkeypatch.setattr(
-#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
-#         fake_canonicalize,
-#         raising=True,
-#     )
-
-#     compounds = ["ethanol"]
-#     cleaned_mapping = {"ethanol": "ethanol_clean"}
-
-#     resolvers_out = {
-#         "r1": {"out": {"ethanol_clean": "c2h6o"}, "additional_info": {}},
-#         "r2": {"out": {"ethanol_clean": "C2H6O"}, "additional_info": {"ethanol_clean": "ok"}},
-#     }
-
-#     result = assemble_compounds_resolution_dict(compounds, resolvers_out, cleaned_mapping)
-
-#     assert set(result.keys()) == {"ethanol"}
-#     entry = result["ethanol"]
-#     assert entry["SMILES"] == ""  # not yet selected
-#     assert entry["SMILES_dict"] == {"C2H6O": ["r1", "r2"]}
-#     assert entry["additional_info"] == {"r2": "ok"}
-
-
-# def test_assemble_split_compounds_resolution_dict_merges_split_smiles(monkeypatch):
-#     """assemble_split_compounds_resolution_dict should merge SMILES from split parts via resolve_delimiter_split_dict."""
-
-#     def fake_canonicalize(smiles):
-#         return smiles
-
-#     monkeypatch.setattr(
-#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
-#         fake_canonicalize,
-#         raising=True,
-#     )
-
-#     # resolvers_out_dict not used directly by our fake but required by API
-#     resolvers_out_dict = {}
-#     cleaned_mapping = {"mix": "mix_clean"}
-#     delimiter_split_dict = {"mix_clean": ["a", "b"]}
-
-#     # Start with an entry that has an existing SMILES_dict
-#     compounds_out_dict = {
-#         "mix": {
-#             "SMILES": "",
-#             "SMILES_source": [],
-#             "SMILES_dict": {},
-#             "additional_info": {},
-#         }
-#     }
-
-#     def fake_resolve_delimiter_split_dict(compound_cleaned, ro_dict, del_dict):
-#         assert compound_cleaned == "mix_clean"
-#         assert del_dict is delimiter_split_dict
-#         # Pretend the split parts combine into two possible SMILES
-#         return {
-#             "S_mix1": ["r_split1"],
-#             "S_mix2": ["r_split2", "r_split3"],
-#         }
-
-#     monkeypatch.setattr(
-#         "cholla_chem.name_manipulation.split_names.resolve_delimiter_split_dict",
-#         fake_resolve_delimiter_split_dict,
-#         raising=True,
-#     )
-
-#     result = assemble_split_compounds_resolution_dict(
-#         compounds_out_dict,
-#         ["mix"],
-#         resolvers_out_dict,
-#         cleaned_mapping,
-#         delimiter_split_dict,
-#     )
-
-#     entry = result["mix"]
-#     assert entry["SMILES_dict"] == {
-#         "S_mix1": ["r_split1"],
-#         "S_mix2": ["r_split2", "r_split3"],
-#     }
-
-
-# def test_select_smiles_with_criteria_uses_selector(monkeypatch):
-#     """select_smiles_with_criteria should delegate to SMILESSelector and populate SMILES and SMILES_source."""
-
-#     # Prepare a minimal compounds_out_dict with one compound and two candidate SMILES
-#     compounds_out = {
-#         "ethanol": {
-#             "SMILES": "",
-#             "SMILES_source": [],
-#             "SMILES_dict": {
-#                 "S1": ["r1"],
-#                 "S2": ["r2"],
-#             },
-#             "additional_info": {},
-#         }
-#     }
-
-#     resolvers_weight = {"r1": 1.0, "r2": 2.0}
-#     priority_order = ["r2", "r1"]
-
-#     selected_calls = []
-
-#     class FakeSelector:
-#         def __init__(self, compounds_out_dict, weight_dict, priority_list):  # pragma: no cover - wiring only
-#             selected_calls.append((compounds_out_dict, weight_dict, priority_list))
-
-#         def select_smiles(self, compound, mode):
-#             # Always pick S2 for this test
-#             assert compound == "ethanol"
-#             assert mode == "weighted"
-#             return "S2", ["r2"]
-
-#     monkeypatch.setattr(
-#         "cholla_chem.main.SMILESSelector",
-#         FakeSelector,
-#         raising=True,
-#     )
-
-#     result = select_smiles_with_criteria(
-#         compounds_out,
-#         resolvers_weight,
-#         priority_order,
-#         smiles_selection_mode="weighted",
-#     )
-
-#     assert selected_calls  # FakeSelector was constructed
-#     assert result["ethanol"]["SMILES"] == "S2"
-#     assert result["ethanol"]["SMILES_source"] == ["r2"]
-
-
-# def test_resolve_compounds_to_smiles_validates_inputs_and_resolvers(monkeypatch):
-#     """resolve_compounds_to_smiles should validate input types and resolver instances."""
-
-#     # Invalid compounds_list type
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(123, resolvers_list=[DummyResolver("r", {})])
-
-#     # Empty list
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles([], resolvers_list=[DummyResolver("r", {})])
-
-#     # Non-string in list
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(["ok", 1], resolvers_list=[DummyResolver("r", {})])
-
-#     # resolvers_list must be non-empty list of ChemicalNameResolver
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(["a"], resolvers_list=[])
-
-#     class NotAResolver:
-#         pass
-
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(["a"], resolvers_list=[NotAResolver()])
-
-#     # Duplicate resolver names should raise
-#     r1 = DummyResolver("dup", {})
-#     r2 = DummyResolver("dup", {})
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(["a"], resolvers_list=[r1, r2])
-
-#     # smiles_selection_mode must be str or callable
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             smiles_selection_mode=123,
-#         )
-
-#     # detailed_name_dict must be bool
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             detailed_name_dict="yes",  # type: ignore[arg-type]
-#         )
-
-#     # batch_size must be int between 1 and 1000
-#     with pytest.raises(TypeError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             batch_size=1.5,  # type: ignore[arg-type]
-#         )
-
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             batch_size=0,
-#         )
-
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             batch_size=1001,
-#         )
-
-#     # split_names_to_solve must be bool
-#     with pytest.raises(ValueError):
-#         resolve_compounds_to_smiles(
-#             ["a"],
-#             resolvers_list=[DummyResolver("r", {})],
-#             split_names_to_solve="yes",  # type: ignore[arg-type]
-#         )
-
-
-# def test_resolve_compounds_to_smiles_happy_path_minimal(monkeypatch):
-#     """End-to-end: with a simple resolver and selector, should return final SMILES mapping."""
-
-#     # Use a DummyResolver that returns a direct mapping
-#     resolver = DummyResolver("dummy_res", {"a": "S_a"})
-
-#     # Avoid depending on real cleaning/splitting behavior: make them pass-through
-#     monkeypatch.setattr(
-#         "cholla_chem.main.clean_strings_and_return_mapping",
-#         lambda names: (names, {n: n for n in names}),
-#         raising=True,
-#     )
-
-#     monkeypatch.setattr(
-#         "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
-#         lambda names: (names, {}),
-#         raising=True,
-#     )
-
-#     # Canonicalization is also identity for this test
-#     monkeypatch.setattr(
-#         "cholla_chem.utils.chem_utils.canonicalize_smiles",
-#         lambda s: s,
-#         raising=True,
-#     )
-
-#     # Simplify SMILESSelector behavior: always select the only available SMILES if present
-#     class FakeSelector:
-#         def __init__(self, compounds_out_dict, weight_dict, priority_list):  # pragma: no cover - wiring only
-#             self._d = compounds_out_dict
-
-#         def select_smiles(self, compound, mode):
-#             entry = self._d[compound]
-#             # Pick the first key from SMILES_dict, or empty if none
-#             smiles = next(iter(entry["SMILES_dict"].keys()), "")
-#             return smiles, entry["SMILES_dict"].get(smiles, [])
-
-#     monkeypatch.setattr(
-#         "cholla_chem.main.SMILESSelector",
-#         FakeSelector,
-#         raising=True,
-#     )
-
-#     result = resolve_compounds_to_smiles(["a"], resolvers_list=[resolver])
-
-#     assert result == {"a": "S_a"}
+import os
+import sys
+from typing import Dict, List, Tuple
+
+import pytest
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from cholla_chem.main import (
+    ChemicalNameResolver,
+    assemble_compounds_resolution_dict,
+    assemble_split_compounds_resolution_dict,
+    get_resolvers_weight_dict,
+    resolve_compounds_to_smiles,
+    resolve_compounds_using_resolvers,
+    select_smiles_with_criteria,
+)
+
+
+class DummyResolver(ChemicalNameResolver):
+    """In-memory resolver for testing. Tracks which compounds it was called with."""
+
+    def __init__(
+        self,
+        resolver_name: str,
+        mapping: Dict[str, str],
+        info_mapping: Dict[str, str] | None = None,
+        weight: float = 1.0,
+    ):
+        super().__init__("dummy", resolver_name, weight)
+        self._mapping = mapping
+        self._info_mapping = info_mapping or {}
+        self.call_log: List[List[str]] = []
+
+    def name_to_smiles(
+        self, compound_name_list: List[str]
+    ) -> Tuple[Dict[str, str], Dict[str, str]]:
+        self.call_log.append(list(compound_name_list))
+        out = {name: self._mapping.get(name, "") for name in compound_name_list}
+        info = {name: self._info_mapping.get(name, "") for name in compound_name_list}
+        info = {k: v for k, v in info.items() if v}
+        return out, info
+
+
+# ---------------------------------------------------------------------------
+# Baseline tests (restore coverage of existing behavior)
+# ---------------------------------------------------------------------------
+
+
+def test_get_resolvers_weight_dict_uses_resolver_name_and_weight():
+    r1 = DummyResolver("r1", {}, weight=1.5)
+    r2 = DummyResolver("r2", {}, weight=3.0)
+
+    result = get_resolvers_weight_dict([r1, r2])
+
+    assert result == {"r1": 1.5, "r2": 3.0}
+
+
+def test_resolve_compounds_using_resolvers_basic():
+    r1 = DummyResolver("res1", {"a": "S_a1", "b": "S_b1"}, {"a": "i1"})
+    r2 = DummyResolver("res2", {"a": "S_a2"}, {"b": "i2"})
+
+    out = resolve_compounds_using_resolvers(["a", "b"], [r1, r2], batch_size=500)
+
+    assert set(out.keys()) == {"res1", "res2"}
+    assert out["res1"]["out"] == {"a": "S_a1", "b": "S_b1"}
+    assert out["res1"]["additional_info"] == {"a": "i1"}
+    assert out["res2"]["out"] == {"a": "S_a2", "b": ""}
+    assert out["res2"]["additional_info"] == {"b": "i2"}
+
+
+def test_resolve_compounds_using_resolvers_batches():
+    r1 = DummyResolver("res1", {"a": "S_a", "b": "S_b"})
+
+    out = resolve_compounds_using_resolvers(["a", "b"], [r1], batch_size=1)
+
+    assert out["res1"]["out"] == {"a": "S_a", "b": "S_b"}
+    assert len(r1.call_log) == 2
+    assert r1.call_log[0] == ["a"]
+    assert r1.call_log[1] == ["b"]
+
+
+def test_assemble_compounds_resolution_dict_uses_canonical_smiles(monkeypatch):
+    def fake_canonicalize(smiles: str) -> str:
+        return smiles.upper() if smiles else ""
+
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        fake_canonicalize,
+        raising=True,
+    )
+
+    compounds = ["ethanol"]
+    cleaned_mapping = {"ethanol": "ethanol_clean"}
+    resolvers_out = {
+        "r1": {"out": {"ethanol_clean": "c2h6o"}, "additional_info": {}},
+        "r2": {
+            "out": {"ethanol_clean": "C2H6O"},
+            "additional_info": {"ethanol_clean": "ok"},
+        },
+    }
+
+    result = assemble_compounds_resolution_dict(
+        compounds, resolvers_out, cleaned_mapping
+    )
+
+    assert set(result.keys()) == {"ethanol"}
+    entry = result["ethanol"]
+    assert entry["SMILES"] == ""
+    assert entry["SMILES_dict"] == {"C2H6O": ["r1", "r2"]}
+    assert entry["additional_info"] == {"r2": "ok"}
+
+
+def test_assemble_split_compounds_resolution_dict_merges_split_smiles(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    resolvers_out_dict = {}
+    cleaned_mapping = {"mix": "mix_clean"}
+    delimiter_split_dict = {"mix_clean": ["a", "b"]}
+    compounds_out_dict = {
+        "mix": {
+            "SMILES": "",
+            "SMILES_source": [],
+            "SMILES_dict": {},
+            "additional_info": {},
+        }
+    }
+
+    def fake_resolve_delimiter_split_dict(compound_cleaned, ro_dict, del_dict):
+        assert compound_cleaned == "mix_clean"
+        assert del_dict is delimiter_split_dict
+        return {
+            "S_mix1": ["r_split1"],
+            "S_mix2": ["r_split2", "r_split3"],
+        }
+
+    monkeypatch.setattr(
+        "cholla_chem.main.resolve_delimiter_split_dict",
+        fake_resolve_delimiter_split_dict,
+        raising=True,
+    )
+
+    result = assemble_split_compounds_resolution_dict(
+        compounds_out_dict,
+        ["mix"],
+        resolvers_out_dict,
+        cleaned_mapping,
+        delimiter_split_dict,
+    )
+
+    entry = result["mix"]
+    assert entry["SMILES_dict"] == {
+        "S_mix1": ["r_split1"],
+        "S_mix2": ["r_split2", "r_split3"],
+    }
+
+
+def test_select_smiles_with_criteria_uses_selector(monkeypatch):
+    compounds_out = {
+        "ethanol": {
+            "SMILES": "",
+            "SMILES_source": [],
+            "SMILES_dict": {
+                "S1": ["r1"],
+                "S2": ["r2"],
+            },
+            "additional_info": {},
+        }
+    }
+
+    resolvers_weight = {"r1": 1.0, "r2": 2.0}
+    priority_order = ["r2", "r1"]
+
+    selected_calls: List[Tuple] = []
+
+    class FakeSelector:
+        def __init__(self, compounds_out_dict, weight_dict, priority_list):
+            selected_calls.append((compounds_out_dict, weight_dict, priority_list))
+
+        def select_smiles(self, compound, mode):
+            assert compound == "ethanol"
+            assert mode == "weighted"
+            return "S2", ["r2"]
+
+    monkeypatch.setattr(
+        "cholla_chem.main.SMILESSelector",
+        FakeSelector,
+        raising=True,
+    )
+
+    result = select_smiles_with_criteria(
+        compounds_out,
+        resolvers_weight,
+        priority_order,
+        smiles_selection_mode="weighted",
+    )
+
+    assert selected_calls
+    assert result["ethanol"]["SMILES"] == "S2"
+    assert result["ethanol"]["SMILES_source"] == ["r2"]
+
+
+def test_resolve_compounds_to_smiles_validates_inputs():
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(123, resolvers_list=[DummyResolver("r", {})])
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles([], resolvers_list=[DummyResolver("r", {})])
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(["ok", 1], resolvers_list=[DummyResolver("r", {})])
+
+    class NotAResolver:
+        pass
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(["a"], resolvers_list=[NotAResolver()])
+
+    r1 = DummyResolver("dup", {})
+    r2 = DummyResolver("dup", {})
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(["a"], resolvers_list=[r1, r2])
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            smiles_selection_mode=123,
+        )
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            detailed_name_dict="yes",
+        )
+
+    with pytest.raises(TypeError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            batch_size=1.5,
+        )
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            batch_size=0,
+        )
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            batch_size=1001,
+        )
+
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            split_names_to_solve="yes",
+        )
+
+
+def test_resolve_compounds_to_smiles_happy_path(monkeypatch):
+    resolver = DummyResolver("dummy_res", {"a": "S_a"})
+
+    monkeypatch.setattr(
+        "cholla_chem.main.normalize_unicode_and_return_mapping",
+        lambda names: (names, {n: n for n in names}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
+        lambda names: (names, {}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.utils.chem_utils.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    class FakeSelector:
+        def __init__(self, compounds_out_dict, weight_dict, priority_list):
+            self._d = compounds_out_dict
+
+        def select_smiles(self, compound, mode):
+            entry = self._d[compound]
+            smiles = next(iter(entry["SMILES_dict"].keys()), "")
+            return smiles, entry["SMILES_dict"].get(smiles, [])
+
+    monkeypatch.setattr(
+        "cholla_chem.main.SMILESSelector",
+        FakeSelector,
+        raising=True,
+    )
+
+    result = resolve_compounds_to_smiles(["a"], resolvers_list=[resolver])
+
+    assert result == {"a": "S_a"}
+
+
+# ---------------------------------------------------------------------------
+# Early exit tests
+# ---------------------------------------------------------------------------
+
+
+def test_exit_early_skips_resolved_compounds(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"a": "S_a"})
+    r2 = DummyResolver("r2", {"b": "S_b"})
+
+    out = resolve_compounds_using_resolvers(
+        ["a", "b"], [r1, r2], batch_size=500, exit_early=True
+    )
+
+    assert out["r1"]["out"] == {"a": "S_a", "b": ""}
+    assert "a" not in out["r2"]["out"]
+    assert out["r2"]["out"] == {"b": "S_b"}
+    assert r2.call_log == [["b"]]
+
+
+def test_exit_early_all_resolved_breaks_loop(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"a": "S_a", "b": "S_b"})
+    r2 = DummyResolver("r2", {})
+
+    out = resolve_compounds_using_resolvers(
+        ["a", "b"], [r1, r2], batch_size=500, exit_early=True
+    )
+
+    assert out["r1"]["out"] == {"a": "S_a", "b": "S_b"}
+    assert r2.call_log == []
+
+
+def test_exit_early_none_resolved_calls_all_resolvers(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {})
+    r2 = DummyResolver("r2", {"a": "S_a"})
+
+    out = resolve_compounds_using_resolvers(
+        ["a"], [r1, r2], batch_size=500, exit_early=True
+    )
+
+    assert out["r1"]["out"] == {"a": ""}
+    assert out["r2"]["out"] == {"a": "S_a"}
+    assert r1.call_log == [["a"]]
+    assert r2.call_log == [["a"]]
+
+
+def test_exit_early_invalid_smiles_not_counted_as_resolved(monkeypatch):
+    def fake_canonicalize(smiles: str) -> str:
+        if smiles == "invalid":
+            return ""
+        return smiles
+
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        fake_canonicalize,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"a": "invalid"})
+    r2 = DummyResolver("r2", {"a": "S_a"})
+
+    out = resolve_compounds_using_resolvers(
+        ["a"], [r1, r2], batch_size=500, exit_early=True
+    )
+
+    assert out["r1"]["out"] == {"a": "invalid"}
+    assert out["r2"]["out"] == {"a": "S_a"}
+    assert r2.call_log == [["a"]]
+
+
+def test_exit_early_preserves_output_structure(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"a": "S_a"}, {"a": "info_a"})
+    r2 = DummyResolver("r2", {"b": "S_b"})
+
+    out = resolve_compounds_using_resolvers(
+        ["a", "b"], [r1, r2], batch_size=500, exit_early=True
+    )
+
+    assert set(out.keys()) == {"r1", "r2"}
+    assert set(out["r1"].keys()) == {"out", "additional_info"}
+    assert set(out["r2"].keys()) == {"out", "additional_info"}
+    assert out["r1"]["additional_info"] == {"a": "info_a"}
+    assert out["r2"]["additional_info"] == {}
+
+
+def test_exit_early_end_to_end(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.normalize_unicode_and_return_mapping",
+        lambda names: (names, {n: n for n in names}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
+        lambda names: (names, {}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    class FakeSelector:
+        def __init__(self, compounds_out_dict, weight_dict, priority_list):
+            self._d = compounds_out_dict
+
+        def select_smiles(self, compound, mode):
+            entry = self._d[compound]
+            smiles = next(iter(entry["SMILES_dict"].keys()), "")
+            return smiles, entry["SMILES_dict"].get(smiles, [])
+
+    monkeypatch.setattr(
+        "cholla_chem.main.SMILESSelector",
+        FakeSelector,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"aspirin": "CC(=O)Oc1ccccc1C(=O)O"})
+    r2 = DummyResolver("r2", {"aspirin": "OTHER_SMILES"})
+    r3 = DummyResolver("r3", {})
+
+    result = resolve_compounds_to_smiles(
+        ["aspirin"], resolvers_list=[r1, r2, r3], exit_early=True
+    )
+
+    assert result == {"aspirin": "CC(=O)Oc1ccccc1C(=O)O"}
+    assert r1.call_log == [["aspirin"]]
+    assert r2.call_log == []
+    assert r3.call_log == []
+
+
+def test_exit_early_validation():
+    with pytest.raises(ValueError):
+        resolve_compounds_to_smiles(
+            ["a"],
+            resolvers_list=[DummyResolver("r", {})],
+            exit_early="yes",
+        )
+
+
+def test_exit_early_passes_to_recursive_name_correction(monkeypatch):
+    monkeypatch.setattr(
+        "cholla_chem.main.normalize_unicode_and_return_mapping",
+        lambda names: (names, {n: n for n in names}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
+        lambda names: (names, {}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    class FakeSelector:
+        def __init__(self, compounds_out_dict, weight_dict, priority_list):
+            self._d = compounds_out_dict
+
+        def select_smiles(self, compound, mode):
+            entry = self._d[compound]
+            smiles = next(iter(entry["SMILES_dict"].keys()), "")
+            return smiles, entry["SMILES_dict"].get(smiles, [])
+
+    monkeypatch.setattr(
+        "cholla_chem.main.SMILESSelector",
+        FakeSelector,
+        raising=True,
+    )
+
+    r1 = DummyResolver("r1", {"corrected_name": "S_corrected"})
+
+    resolve_calls: List[bool] = []
+
+    original_resolve = resolve_compounds_using_resolvers
+
+    def spy_resolve(compounds_list, resolvers_list, batch_size, exit_early=False):
+        resolve_calls.append(exit_early)
+        return original_resolve(compounds_list, resolvers_list, batch_size, exit_early)
+
+    monkeypatch.setattr(
+        "cholla_chem.main.resolve_compounds_using_resolvers",
+        spy_resolve,
+        raising=True,
+    )
+
+    monkeypatch.setattr(
+        "cholla_chem.main.correct_names",
+        lambda compounds_out_dict, config, resolve_peptide: {
+            "unresolved_compound": {
+                "selected_name": "corrected_name",
+                "top_5": [],
+                "name_manipulation_method": "test",
+                "SMILES": "",
+            }
+        },
+        raising=True,
+    )
+
+    result = resolve_compounds_to_smiles(
+        ["unresolved_compound"],
+        resolvers_list=[r1],
+        exit_early=True,
+        detailed_name_dict=True,
+    )
+
+    assert len(resolve_calls) == 2
+    assert all(call is True for call in resolve_calls)
+    assert result["unresolved_compound"]["SMILES"] == "S_corrected"

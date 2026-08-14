@@ -69,4 +69,8 @@ resolved_smiles = resolve_compounds_to_smiles(
 }}"
 ```
 
+For fast single-name lookups (e.g. search bars), use `exit_early=True` to stop
+querying resolvers once a SMILES is found. See [Resolvers](resolvers.md#early-exit)
+for details.
+
 More information about advanced usage can be found in [Resolvers](resolvers.md), [Smiles Selection](smiles_selection.md), and [Name Correction/Editing](name_manipulation.md)

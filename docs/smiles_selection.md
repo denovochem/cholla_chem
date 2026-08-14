@@ -10,6 +10,15 @@ When different resolvers disagree on the SMILES for a given compound, the SMILES
 - 'random': Pick a random SMILES.
 - 'highest_symmetry': Pick the SMILES with the highest symmetry.
 
+!!! note "Early Exit"
+    The `exit_early=True` parameter in `resolve_compounds_to_smiles` is the
+    performance-oriented complement to the `ordered` strategy. While `ordered`
+    runs all resolvers and then picks the first match by priority, `exit_early`
+    stops calling subsequent resolvers entirely once a compound is resolved.
+    When `exit_early` is enabled, `smiles_selection_mode` has effectively no
+    impact since typically only one resolver's SMILES is available per compound.
+    See [Resolvers](resolvers.md#early-exit) for details.
+
 
 ### Custom SMILES selection functions
 You can also pass a function to resolve_compounds_to_smiles as the smiles_selection_mode to use custom selection functions. For example:
