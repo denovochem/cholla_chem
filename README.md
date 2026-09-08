@@ -6,6 +6,9 @@
 [![Build Docs](https://github.com/denovochem/cholla_chem/actions/workflows/docs.yml/badge.svg)](https://github.com/denovochem/cholla_chem/actions/workflows/docs.yml)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/denovochem/cholla_chem/blob/main/examples/example_notebook.ipynb)
 
+![ChollaChem](docs/images/cholla_chem_image.png)
+> **Try the web demo:** [denovochem.com/demos/name-to-structure](https://denovochem.com/demos/name-to-structure)
+
 This library is used for performant, comprehensive, and customizable name-to-SMILES conversions. 
 
 This library can use the following existing name-to-SMILES resolvers:

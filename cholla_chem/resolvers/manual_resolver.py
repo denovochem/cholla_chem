@@ -14,13 +14,32 @@ def load_default_manual_name_dict() -> Dict[str, str]:
         return json.load(f)
 
 
+def _normalize_name(name: str) -> str:
+    """
+    Normalize a compound name for matching by lowercasing, stripping whitespace, and removing spaces.
+
+    Removing spaces handles patent-derived names where subscripts are separated by spaces
+    (e.g. ``"Na 2 SO 4"`` normalizes to ``"na2so4"`` to match the dict key ``"Na2SO4"``).
+
+    Args:
+        name (str): The compound name to normalize.
+
+    Returns:
+        str: The normalized name.
+    """
+    return name.lower().strip().replace(" ", "")
+
+
 def process_name_dict(
     compound_name_list: List[str],
     name_dict: Dict[str, str],
 ) -> Dict[str, str]:
     """
-    Process a dictionary of compound names to SMILES by matching the lowercased and stripped
-    compound names with their corresponding SMILES strings.
+    Process a dictionary of compound names to SMILES by matching normalized compound names
+    (lowercased, stripped, and with spaces removed) with their corresponding SMILES strings.
+
+    When multiple dict keys normalize to the same string, non-empty SMILES values are
+    preferred over empty ones, and the first non-empty value is kept.
 
     Args:
         compound_name_list (List[str]): A list of compound names to process.
@@ -30,8 +49,18 @@ def process_name_dict(
         Dict[str, str]: A dictionary of processed compound names to SMILES strings.
     """
     processed_name_dict = {}
-    compound_name_dict_lower = {ele.lower().strip(): ele for ele in compound_name_list}
-    name_dict_lower = {k.lower().strip(): v for k, v in name_dict.items()}
+    compound_name_dict_lower: Dict[str, str] = {}
+    for ele in compound_name_list:
+        key = _normalize_name(ele)
+        if key not in compound_name_dict_lower:
+            compound_name_dict_lower[key] = ele
+
+    name_dict_lower: Dict[str, str] = {}
+    for k, v in name_dict.items():
+        key = _normalize_name(k)
+        if key not in name_dict_lower or (not name_dict_lower[key] and v):
+            name_dict_lower[key] = v
+
     for compound_name, smiles in name_dict_lower.items():
         if not smiles:
             continue

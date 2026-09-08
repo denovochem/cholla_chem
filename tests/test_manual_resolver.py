@@ -6,7 +6,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from cholla_chem.resolvers.manual_resolver import (  # noqa: E402
+from cholla_chem.resolvers.manual_resolver import (
+    _normalize_name,
     name_to_smiles_manual,
     process_name_dict,
 )
@@ -90,3 +91,68 @@ def test_name_to_smiles_manual_uses_default_dict(monkeypatch):
     result = name_to_smiles_manual(names)
 
     assert result == {"Ethanol": "C2H6O", "Water": "H2O"}
+
+
+def test_normalize_name():
+    """_normalize_name should lowercase, strip, and remove all spaces."""
+    assert _normalize_name("Na 2 SO 4") == "na2so4"
+    assert _normalize_name("  CH2 Cl2  ") == "ch2cl2"
+    assert _normalize_name("H2O") == "h2o"
+    assert _normalize_name("  Petroleum Ether  ") == "petroleumether"
+
+
+def test_process_name_dict_space_removal():
+    """process_name_dict should match names with spaces to dict keys without spaces."""
+    compound_names = ["Na 2 SO 4", "CH 2 Cl 2", "N 2"]
+    name_dict = {
+        "Na2SO4": "[Na+].[Na+].[O-]S([O-])(=O)=O",
+        "CH2Cl2": "ClCCl",
+        "N2": "N#N",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {
+        "Na 2 SO 4": "[Na+].[Na+].[O-]S([O-])(=O)=O",
+        "CH 2 Cl 2": "ClCCl",
+        "N 2": "N#N",
+    }
+
+
+def test_process_name_dict_duplicate_keys_prefer_nonempty():
+    """When multiple dict keys normalize to the same string, non-empty values win."""
+    compound_names = ["MgSO4"]
+    name_dict = {
+        "Mg SO4": "[Mg+2].[O-]S([O-])(=O)=O",
+        "MgSO 4": "",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {"MgSO4": "[Mg+2].[O-]S([O-])(=O)=O"}
+
+
+def test_process_name_dict_duplicate_keys_empty_then_nonempty():
+    """An empty value followed by a non-empty value for the same normalized key should use the non-empty one."""
+    compound_names = ["MgSO4"]
+    name_dict = {
+        "MgSO 4": "",
+        "Mg SO4": "[Mg+2].[O-]S([O-])(=O)=O",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {"MgSO4": "[Mg+2].[O-]S([O-])(=O)=O"}
+
+
+def test_process_name_dict_duplicate_keys_both_nonempty_keeps_first():
+    """When two non-empty values collide, the first one encountered should be kept."""
+    compound_names = ["NH4Cl"]
+    name_dict = {
+        "NH4 Cl": "[Cl-].[NH4+]",
+        "NH 4 Cl": "NCl",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {"NH4Cl": "[Cl-].[NH4+]"}
