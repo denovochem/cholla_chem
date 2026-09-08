@@ -29,7 +29,8 @@
 !docs/cli.md
 !docs/contributing.md
 !docs/stylesheets/extra.css
-!docs/cholla_chem_image.png
+!docs/images/
+!docs/images/cholla_chem_image.png
 
 # Source Code
 !cholla_chem/
