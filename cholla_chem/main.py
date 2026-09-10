@@ -42,6 +42,7 @@ from cholla_chem.types import (
     CompoundResolutionEntry,
     CompoundResolutionEntryWithNameCorrection,
 )
+from cholla_chem.utils.blacklist import filter_blacklisted, get_blacklist_set
 from cholla_chem.utils.chem_utils import canonicalize_smiles
 from cholla_chem.utils.logging_config import logger
 
@@ -120,7 +121,6 @@ class ChemicalNameResolver(ABC):
                 - Dict mapping successful names to SMILES.
                 - Dict mapping failed names to error messages.
         """
-        pass
 
 
 class OpsinNameResolver(ChemicalNameResolver):
@@ -240,7 +240,7 @@ class SQLiteLookupNameResolver(ChemicalNameResolver):
         db_path: Union[str, Path],
         resolver_weight: float = 4.0,
         match_mode: str = "exact",
-        rate_limit_time: float | None = None,
+        rate_limit_time: Optional[float] = None,
     ):
         super().__init__(
             "sqlite_lookup",
@@ -341,7 +341,7 @@ class ManualNameResolver(ChemicalNameResolver):
     def __init__(
         self,
         resolver_name: str,
-        provided_name_dict: dict | None = None,
+        provided_name_dict: Optional[dict] = None,
         resolver_weight: float = 10,
     ):
         super().__init__(
@@ -368,7 +368,7 @@ class ManualNameResolver(ChemicalNameResolver):
     def name_to_smiles(
         self,
         compound_name_list: List[str],
-        provided_name_dict: Dict[str, str] | None = None,
+        provided_name_dict: Optional[Dict[str, str]] = None,
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
         Convert chemical names to SMILES using manual name database.
@@ -521,6 +521,7 @@ def resolve_compounds_using_resolvers(
     compounds_list: List[str],
     resolvers_list: List[ChemicalNameResolver],
     batch_size: int,
+    exit_early: bool = False,
 ) -> Dict[str, Dict[str, Dict[str, str]]]:
     """
     Resolve a list of compound names using a list of resolvers.
@@ -529,21 +530,28 @@ def resolve_compounds_using_resolvers(
         compounds_list (List[str]): A list of compound names to resolve.
         resolvers_list (List[ChemicalNameResolver]): A list of resolvers to use.
         batch_size (int): The number of compound names to process in each batch.
+        exit_early (bool, optional): If True, stop sending compounds to subsequent
+            resolvers once a valid SMILES has been found for that compound.
+            Defaults to False.
 
     Returns:
         Dict[str, Dict[str, Dict[str, str]]]: A dictionary mapping each resolver name to its output dictionary, which maps each compound name to its resolved SMILES string and error message.
     """
     resolvers_out_dict = {}
+    remaining_compounds = list(compounds_list)
     for resolver in resolvers_list:
+        if not remaining_compounds:
+            logger.info("All compounds resolved, skipping remaining resolvers.")
+            break
         out = {}
         additional_info = {}
         last_request_duration = 0.0
-        for i in range(0, len(compounds_list), batch_size):
+        for i in range(0, len(remaining_compounds), batch_size):
             if resolver.rate_limit_time and i != 0:
                 sleep_time = resolver.rate_limit_time - last_request_duration
                 if sleep_time > 0:
                     time.sleep(sleep_time)
-            chunk = compounds_list[i : i + batch_size]
+            chunk = remaining_compounds[i : i + batch_size]
             start_time = time.time()
             out_chunk, additional_info_chunk = resolver.name_to_smiles(chunk)
             last_request_duration = time.time() - start_time
@@ -553,6 +561,16 @@ def resolve_compounds_using_resolvers(
             "out": out,
             "additional_info": additional_info,
         }
+        if exit_early:
+            resolved = {
+                compound
+                for compound, smiles in out.items()
+                if smiles and canonicalize_smiles(smiles)
+            }
+            if resolved:
+                remaining_compounds = [
+                    c for c in remaining_compounds if c not in resolved
+                ]
     return resolvers_out_dict
 
 
@@ -743,6 +761,8 @@ def resolve_compounds_to_smiles(
     attempt_name_correction: bool = True,
     internet_connection_available: bool = True,
     name_correction_config: Optional[CorrectorConfig] = None,
+    exit_early: bool = False,
+    use_blacklist: bool = True,
 ) -> (
     Dict[str, CompoundResolutionEntry]
     | Dict[str, CompoundResolutionEntryWithNameCorrection]
@@ -750,6 +770,11 @@ def resolve_compounds_to_smiles(
 ):
     """
     Resolve a list of compound names to their SMILES representations.
+
+    Names matching the built-in blacklist (e.g. patent/paper labels like "Example 2",
+    "Compound 9", "IV") are filtered out before resolution and will appear in the
+    output with an empty SMILES string. This prevents database-backed resolvers
+    from returning spurious results for non-chemical identifiers.
 
     Args:
         compounds_list (List[str]): A list of compound names.
@@ -768,6 +793,16 @@ def resolve_compounds_to_smiles(
             Defaults to True.
         internet_connection_available (bool, optional): Whether an internet connection is available to resolve compound names. Defaults to True.
         name_correction_config (CorrectorConfig, optional): Configuration for name correction. Defaults to None.
+        exit_early (bool, optional): If True, stop querying subsequent resolvers for
+            a compound once any resolver returns a valid SMILES for it. Each compound
+            exits independently. Most useful for single-compound lookups or
+            interactive use cases (e.g. search bars) where speed matters more than
+            cross-resolver consensus. When enabled, smiles_selection_mode has
+            effectively no impact since typically only one resolver's SMILES is
+            available per compound. Defaults to False.
+        use_blacklist (bool, optional): If True, filter out names matching the built-in
+            blacklist before resolution. Blacklisted names still appear in the output
+            with empty SMILES. Defaults to True.
 
     Returns:
         Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]: A dictionary mapping each compound to its SMILES representation and resolvers, or a simple dictionary mapping each compound to it's selected SMILES representation.
@@ -852,6 +887,9 @@ def resolve_compounds_to_smiles(
     if not isinstance(internet_connection_available, bool):
         raise ValueError("Invalid input: internet_connection_available must be a bool.")
 
+    if not isinstance(exit_early, bool):
+        raise ValueError("Invalid input: exit_early must be a bool.")
+
     if not internet_connection_available:
         logger.info(
             "Internet connection not available, filtering out internet-dependent resolvers."
@@ -878,9 +916,19 @@ def resolve_compounds_to_smiles(
             split_compounds_on_delimiters_and_return_mapping(cleaned_compounds_list)
         )
 
+    # Filter out blacklisted names before resolution.
+    # Blacklisted names (e.g. patent/paper labels) still appear in the output
+    # with empty SMILES because the assembly step iterates over the original
+    # compounds_list, not cleaned_compounds_list.
+    blacklist_set = get_blacklist_set() if use_blacklist else frozenset()
+    if use_blacklist and blacklist_set:
+        cleaned_compounds_list = filter_blacklisted(
+            cleaned_compounds_list, blacklist_set
+        )
+
     # Resolve compounds and split compound names with resolvers
     resolvers_out_dict = resolve_compounds_using_resolvers(
-        cleaned_compounds_list, resolvers_list, batch_size
+        cleaned_compounds_list, resolvers_list, batch_size, exit_early
     )
 
     # Assemble the resolution dictionary
@@ -915,8 +963,16 @@ def resolve_compounds_to_smiles(
         corrected_names_dict = correct_names(
             compounds_out_dict, name_correction_config, resolve_peptide_shorthand
         )
+        # Exclude blacklisted names from name correction so they are not
+        # "rescued" by the corrector (e.g. "Compound 9" -> "Compound-9").
+        if use_blacklist and blacklist_set:
+            corrected_names_dict = {
+                k: v
+                for k, v in corrected_names_dict.items()
+                if k.lower() not in blacklist_set
+            }
         if corrected_names_dict:
-            corrected_pairs: list[tuple[str, str]] = []
+            corrected_pairs: List[Tuple[str, str]] = []
             for original_name, info in corrected_names_dict.items():
                 selected = info.get("selected_name")
                 if isinstance(selected, str) and selected:
@@ -935,6 +991,8 @@ def resolve_compounds_to_smiles(
                     split_names_to_solve=split_names_to_solve,
                     resolve_peptide_shorthand=False,
                     attempt_name_correction=False,
+                    exit_early=exit_early,
+                    use_blacklist=use_blacklist,
                 )
 
                 # ugliness to get rid of mypy error.

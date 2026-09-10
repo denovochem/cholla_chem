@@ -1,5 +1,5 @@
 import argparse
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from cholla_chem.main import resolve_compounds_to_smiles
 from cholla_chem.utils.file_utils import read_names_from_file, write_results
@@ -81,10 +81,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=bool,
         help="Whether an internet connection is available",
     )
+    p.add_argument(
+        "--exit-early",
+        default=False,
+        type=bool,
+        help="Stop querying subsequent resolvers once a SMILES is found for a compound",
+    )
     return p
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """
     Main entry point for the CLI.
 
@@ -125,6 +131,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         resolve_peptide_shorthand=args.resolve_peptide_shorthand,
         attempt_name_correction=args.attempt_name_correction,
         internet_connection_available=args.internet_connection_available,
+        exit_early=args.exit_early,
     )
 
     write_results(

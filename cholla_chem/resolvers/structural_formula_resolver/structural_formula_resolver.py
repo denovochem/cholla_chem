@@ -20,6 +20,8 @@ from cholla_chem.utils.logging_config import logger
 # CONSTANTS AND ELEMENT DATA
 # =============================================================================
 
+MAX_REPEAT_COUNT = 100
+
 
 class BondOrder(Enum):
     """Enumeration of chemical bond orders."""
@@ -305,7 +307,6 @@ class Tokenizer:
 class ParseError(Exception):
     """Raised when parsing fails."""
 
-    pass
 
 
 @dataclass
@@ -416,9 +417,21 @@ class StructuralFormulaParser:
         return self._current().type in types
 
     def _consume_number(self) -> int:
-        """Consume a number token, return 1 if not present."""
+        """
+        Consume a number token, return 1 if not present.
+
+        Raises:
+            ParseError: If the number exceeds MAX_REPEAT_COUNT, which would
+                cause excessive atom creation (e.g. compound codes like
+                "PF-00580378" parsed as P with 580378 F substituents).
+        """
         if self._match(TokenType.NUMBER):
-            return int(self._advance().value)
+            value = int(self._advance().value)
+            if value > MAX_REPEAT_COUNT:
+                raise ParseError(
+                    f"Count {value} exceeds maximum allowed ({MAX_REPEAT_COUNT})"
+                )
+            return value
         return 1
 
     # -------------------------------------------------------------------------
@@ -644,9 +657,7 @@ class StructuralFormulaParser:
                 multiplier = self._consume_number()
 
                 # Special case: (O) typically means carbonyl =O
-                if element == "O" and bond_order == BondOrder.SINGLE:
-                    bond_order = BondOrder.DOUBLE
-                elif element == "S" and bond_order == BondOrder.SINGLE:
+                if element == "O" and bond_order == BondOrder.SINGLE or element == "S" and bond_order == BondOrder.SINGLE:
                     bond_order = BondOrder.DOUBLE
 
                 return BranchGroup(
@@ -1005,9 +1016,7 @@ class StructuralFormulaParser:
             return self._build_alkyl_chain(3)
         elif fragment_pattern == "C4H9":
             return self._build_alkyl_chain(4)
-        elif fragment_pattern == "NO2":
-            return self._build_nitro()
-        elif fragment_pattern == "O2N":
+        elif fragment_pattern == "NO2" or fragment_pattern == "O2N":
             return self._build_nitro()
 
         return None

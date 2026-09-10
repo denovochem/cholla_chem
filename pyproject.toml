@@ -62,5 +62,11 @@ dev = [
     "ruff>=0.15.6",
 ]
 
+[tool.ruff.lint]
+ignore = ["UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_main.py" = ["E402"]
+
 [project.scripts]
 cholla-chem = "cholla_chem.cli:main"

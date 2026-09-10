@@ -47,6 +47,37 @@ resolved_smiles = resolve_compounds_to_smiles(
 ```
 
 
+## Early Exit
+
+By default, all resolvers are queried for all compounds, and the best SMILES is
+selected using the configured `smiles_selection_mode`. For interactive use cases
+where speed is more important than consensus (e.g. search bar),
+enable `exit_early=True`:
+
+```
+from cholla_chem import resolve_compounds_to_smiles, OpsinNameResolver, PubChemNameResolver
+
+resolvers = [
+    OpsinNameResolver('opsin', resolver_weight=3),
+    PubChemNameResolver('pubchem', resolver_weight=2),
+]
+
+result = resolve_compounds_to_smiles(
+    ['aspirin'],
+    resolvers_list=resolvers,
+    exit_early=True,
+)
+```
+
+With `exit_early=True`, each compound is sent to resolvers in list order. Once any
+resolver returns a valid SMILES for a compound, that compound is not sent to
+subsequent resolvers. **Resolver ordering is critical** — place fast/local resolvers
+first (e.g. Manual, SQLite, OPSIN) and slow/network resolvers last (e.g. PubChem, CIRpy).
+
+When `exit_early` is enabled, `smiles_selection_mode` has effectively no impact since
+typically only one resolver's SMILES is available per compound.
+
+
 ## OpsinNameResolver
 This resolver uses [OPSIN](https://github.com/dan2097/opsin) for name-to-SMILES conversion. The code is adapted from [py2opsin](https://github.com/JacksonBurns/py2opsin). This resolver can be configured with the following arguments:
 
