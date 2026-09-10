@@ -10,7 +10,7 @@ if PROJECT_ROOT not in sys.path:
 
 Chem = pytest.importorskip("rdkit.Chem")
 
-from cholla_chem.resolvers.structural_formula_resolver.structural_formula_resolver import (  # noqa: E402
+from cholla_chem.resolvers.structural_formula_resolver.structural_formula_resolver import (
     StructuralFormulaConverter,
 )
 
@@ -161,4 +161,24 @@ def test_structural_formula_converter_matches_expected_smiles(formula, name, exp
         f"Got: {got}\n"
         f"Expected: {expected}\n"
         f"Errors: {converter.get_errors()}\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "compound_code",
+    [
+        "PF-00580378",
+        "PF-06895189",
+        "IPI-335589",
+    ],
+)
+def test_structural_formula_converter_rejects_compound_codes_without_hang(
+    compound_code,
+):
+    """Compound codes with large numbers should be rejected quickly, not hang."""
+    converter = StructuralFormulaConverter(strict_mode=True)
+    result = converter.convert(compound_code)
+    assert result == "", (
+        f"Expected empty result for compound code {compound_code!r}, got {result!r}\n"
+        f"Errors: {converter.get_errors()}"
     )

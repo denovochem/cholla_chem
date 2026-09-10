@@ -42,6 +42,7 @@ from cholla_chem.types import (
     CompoundResolutionEntry,
     CompoundResolutionEntryWithNameCorrection,
 )
+from cholla_chem.utils.blacklist import filter_blacklisted, get_blacklist_set
 from cholla_chem.utils.chem_utils import canonicalize_smiles
 from cholla_chem.utils.logging_config import logger
 
@@ -761,6 +762,7 @@ def resolve_compounds_to_smiles(
     internet_connection_available: bool = True,
     name_correction_config: Optional[CorrectorConfig] = None,
     exit_early: bool = False,
+    use_blacklist: bool = True,
 ) -> (
     Dict[str, CompoundResolutionEntry]
     | Dict[str, CompoundResolutionEntryWithNameCorrection]
@@ -768,6 +770,11 @@ def resolve_compounds_to_smiles(
 ):
     """
     Resolve a list of compound names to their SMILES representations.
+
+    Names matching the built-in blacklist (e.g. patent/paper labels like "Example 2",
+    "Compound 9", "IV") are filtered out before resolution and will appear in the
+    output with an empty SMILES string. This prevents database-backed resolvers
+    from returning spurious results for non-chemical identifiers.
 
     Args:
         compounds_list (List[str]): A list of compound names.
@@ -793,6 +800,9 @@ def resolve_compounds_to_smiles(
             cross-resolver consensus. When enabled, smiles_selection_mode has
             effectively no impact since typically only one resolver's SMILES is
             available per compound. Defaults to False.
+        use_blacklist (bool, optional): If True, filter out names matching the built-in
+            blacklist before resolution. Blacklisted names still appear in the output
+            with empty SMILES. Defaults to True.
 
     Returns:
         Dict[str, Dict[str, Dict[str, List[str]]]] | Dict[str, str]: A dictionary mapping each compound to its SMILES representation and resolvers, or a simple dictionary mapping each compound to it's selected SMILES representation.
@@ -906,6 +916,16 @@ def resolve_compounds_to_smiles(
             split_compounds_on_delimiters_and_return_mapping(cleaned_compounds_list)
         )
 
+    # Filter out blacklisted names before resolution.
+    # Blacklisted names (e.g. patent/paper labels) still appear in the output
+    # with empty SMILES because the assembly step iterates over the original
+    # compounds_list, not cleaned_compounds_list.
+    blacklist_set = get_blacklist_set() if use_blacklist else frozenset()
+    if use_blacklist and blacklist_set:
+        cleaned_compounds_list = filter_blacklisted(
+            cleaned_compounds_list, blacklist_set
+        )
+
     # Resolve compounds and split compound names with resolvers
     resolvers_out_dict = resolve_compounds_using_resolvers(
         cleaned_compounds_list, resolvers_list, batch_size, exit_early
@@ -943,6 +963,14 @@ def resolve_compounds_to_smiles(
         corrected_names_dict = correct_names(
             compounds_out_dict, name_correction_config, resolve_peptide_shorthand
         )
+        # Exclude blacklisted names from name correction so they are not
+        # "rescued" by the corrector (e.g. "Compound 9" -> "Compound-9").
+        if use_blacklist and blacklist_set:
+            corrected_names_dict = {
+                k: v
+                for k, v in corrected_names_dict.items()
+                if k.lower() not in blacklist_set
+            }
         if corrected_names_dict:
             corrected_pairs: List[Tuple[str, str]] = []
             for original_name, info in corrected_names_dict.items():
@@ -964,6 +992,7 @@ def resolve_compounds_to_smiles(
                     resolve_peptide_shorthand=False,
                     attempt_name_correction=False,
                     exit_early=exit_early,
+                    use_blacklist=use_blacklist,
                 )
 
                 # ugliness to get rid of mypy error.

@@ -543,3 +543,143 @@ def test_exit_early_passes_to_recursive_name_correction(monkeypatch):
     assert len(resolve_calls) == 2
     assert all(call is True for call in resolve_calls)
     assert result["unresolved_compound"]["SMILES"] == "S_corrected"
+
+
+# ---------------------------------------------------------------------------
+# Blacklist integration tests
+# ---------------------------------------------------------------------------
+
+
+def _setup_blacklist_mocks(monkeypatch):
+    """Apply the standard mocks needed for resolve_compounds_to_smiles tests."""
+    monkeypatch.setattr(
+        "cholla_chem.main.normalize_unicode_and_return_mapping",
+        lambda names: (names, {n: n for n in names}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.main.split_compounds_on_delimiters_and_return_mapping",
+        lambda names: (names, {}),
+        raising=True,
+    )
+    monkeypatch.setattr(
+        "cholla_chem.utils.chem_utils.canonicalize_smiles",
+        lambda s: s,
+        raising=True,
+    )
+
+    class FakeSelector:
+        def __init__(self, compounds_out_dict, weight_dict, priority_list):
+            self._d = compounds_out_dict
+
+        def select_smiles(self, compound, mode):
+            entry = self._d[compound]
+            smiles = next(iter(entry["SMILES_dict"].keys()), "")
+            return smiles, entry["SMILES_dict"].get(smiles, [])
+
+    monkeypatch.setattr(
+        "cholla_chem.main.SMILESSelector",
+        FakeSelector,
+        raising=True,
+    )
+
+
+def test_blacklisted_name_gets_empty_smiles(monkeypatch):
+    """A blacklisted name should appear in the output with empty SMILES."""
+    _setup_blacklist_mocks(monkeypatch)
+    resolver = DummyResolver("dummy_res", {"ethanol": "S_ethanol"})
+
+    result = resolve_compounds_to_smiles(
+        ["ethanol", "Example 2"], resolvers_list=[resolver]
+    )
+
+    assert result["ethanol"] == "S_ethanol"
+    assert result["Example 2"] == ""
+
+
+def test_blacklisted_name_not_sent_to_resolvers(monkeypatch):
+    """Blacklisted names should not be passed to any resolver."""
+    _setup_blacklist_mocks(monkeypatch)
+    resolver = DummyResolver("dummy_res", {"ethanol": "S_ethanol", "Example 2": "S_bad"})
+
+    result = resolve_compounds_to_smiles(
+        ["ethanol", "Example 2"], resolvers_list=[resolver]
+    )
+
+    # The resolver should only have been called with non-blacklisted names
+    assert len(resolver.call_log) == 1
+    assert "Example 2" not in resolver.call_log[0]
+    assert "ethanol" in resolver.call_log[0]
+    # Even though the resolver has a mapping for "Example 2", it should not be used
+    assert result["Example 2"] == ""
+
+
+def test_blacklist_case_insensitive(monkeypatch):
+    """Uppercase variants of blacklisted names should also be filtered."""
+    _setup_blacklist_mocks(monkeypatch)
+    resolver = DummyResolver("dummy_res", {"ethanol": "S_ethanol", "COMPOUND 9": "S_bad"})
+
+    result = resolve_compounds_to_smiles(
+        ["ethanol", "COMPOUND 9"], resolvers_list=[resolver]
+    )
+
+    assert result["ethanol"] == "S_ethanol"
+    assert result["COMPOUND 9"] == ""
+
+
+def test_use_blacklist_false_disables_filtering(monkeypatch):
+    """With use_blacklist=False, blacklisted names should be sent to resolvers."""
+    _setup_blacklist_mocks(monkeypatch)
+    resolver = DummyResolver("dummy_res", {"ethanol": "S_ethanol", "Example 2": "S_bad"})
+
+    result = resolve_compounds_to_smiles(
+        ["ethanol", "Example 2"], resolvers_list=[resolver], use_blacklist=False
+    )
+
+    assert result["ethanol"] == "S_ethanol"
+    assert result["Example 2"] == "S_bad"
+
+
+def test_blacklisted_name_excluded_from_name_correction_results(monkeypatch):
+    """Even if correct_names returns a correction for a blacklisted name, it should not be applied."""
+    _setup_blacklist_mocks(monkeypatch)
+    resolver = DummyResolver("dummy_res", {"ethanol": "S_ethanol"})
+
+    def fake_correct_names(compounds_out_dict, config, resolve_peptide):
+        return {
+            "Example 2": {
+                "selected_name": "corrected_example2",
+                "top_5": [],
+                "name_manipulation_method": "test",
+                "SMILES": "",
+            },
+            "ethanol": {
+                "selected_name": "corrected_ethanol",
+                "top_5": [],
+                "name_manipulation_method": "test",
+                "SMILES": "",
+            },
+        }
+
+    monkeypatch.setattr(
+        "cholla_chem.main.correct_names",
+        fake_correct_names,
+        raising=True,
+    )
+
+    # Add a resolver for the corrected names
+    resolver2 = DummyResolver(
+        "dummy_res2",
+        {"corrected_ethanol": "S_corrected_ethanol", "corrected_example2": "S_bad"},
+    )
+
+    result = resolve_compounds_to_smiles(
+        ["ethanol", "Example 2"],
+        resolvers_list=[resolver, resolver2],
+        detailed_name_dict=True,
+    )
+
+    # "ethanol" should get corrected and resolved
+    assert result["ethanol"]["SMILES"] == "S_corrected_ethanol"
+    # "Example 2" should NOT get corrected - should remain empty
+    assert result["Example 2"]["SMILES"] == ""

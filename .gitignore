@@ -38,6 +38,7 @@
 !cholla_chem/datafiles/
 !cholla_chem/datafiles/__init__.py
 !cholla_chem/datafiles/chemical_name_tokens.json
+!cholla_chem/datafiles/blacklisted_names.json
 !cholla_chem/datafiles/opsin-cli-2.9.0-jar-with-dependencies.jar
 !cholla_chem/datafiles/name_dicts/
 !cholla_chem/datafiles/name_dicts/__init__.py
@@ -99,6 +100,7 @@
 !cholla_chem/utils/logging_config.py
 !cholla_chem/utils/string_utils.py
 !cholla_chem/utils/file_utils.py
+!cholla_chem/utils/blacklist.py
 
 !scripts
 !scripts/__init__.py
@@ -118,6 +120,7 @@
 !tests/test_structural_formula_resolver.py
 !tests/test_ocr_map_consistency.py
 !tests/test_sqlite_lookup_resolver.py
+!tests/test_blacklist.py
 
 # Examples
 !examples/

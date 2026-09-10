@@ -8,6 +8,7 @@ if PROJECT_ROOT not in sys.path:
 
 from cholla_chem.resolvers.manual_resolver import (
     _normalize_name,
+    _normalize_name_ci,
     name_to_smiles_manual,
     process_name_dict,
 )
@@ -94,11 +95,19 @@ def test_name_to_smiles_manual_uses_default_dict(monkeypatch):
 
 
 def test_normalize_name():
-    """_normalize_name should lowercase, strip, and remove all spaces."""
-    assert _normalize_name("Na 2 SO 4") == "na2so4"
-    assert _normalize_name("  CH2 Cl2  ") == "ch2cl2"
-    assert _normalize_name("H2O") == "h2o"
-    assert _normalize_name("  Petroleum Ether  ") == "petroleumether"
+    """_normalize_name should strip whitespace and remove spaces, preserving case."""
+    assert _normalize_name("Na 2 SO 4") == "Na2SO4"
+    assert _normalize_name("  CH2 Cl2  ") == "CH2Cl2"
+    assert _normalize_name("H2O") == "H2O"
+    assert _normalize_name("  Petroleum Ether  ") == "PetroleumEther"
+
+
+def test_normalize_name_ci():
+    """_normalize_name_ci should lowercase, strip, and remove all spaces."""
+    assert _normalize_name_ci("Na 2 SO 4") == "na2so4"
+    assert _normalize_name_ci("  CH2 Cl2  ") == "ch2cl2"
+    assert _normalize_name_ci("H2O") == "h2o"
+    assert _normalize_name_ci("  Petroleum Ether  ") == "petroleumether"
 
 
 def test_process_name_dict_space_removal():
@@ -156,3 +165,70 @@ def test_process_name_dict_duplicate_keys_both_nonempty_keeps_first():
     result = process_name_dict(compound_names, name_dict)
 
     assert result == {"NH4Cl": "[Cl-].[NH4+]"}
+
+
+def test_process_name_dict_exact_case_match_resolves_ambiguous():
+    """Exact case match should return the correct SMILES when case variants exist."""
+    compound_names = ["CoCl2", "COCl2"]
+    name_dict = {
+        "CoCl2": "Cl[Co]Cl",
+        "COCl2": "C(=O)(Cl)Cl",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {"CoCl2": "Cl[Co]Cl", "COCl2": "C(=O)(Cl)Cl"}
+
+
+def test_process_name_dict_ambiguous_lowercase_skipped(monkeypatch):
+    """Lowercase input that matches multiple case variants should be skipped."""
+    warnings = []
+
+    class _FakeLogger:
+        @staticmethod
+        def warning(msg, *args, **kwargs):
+            warnings.append(msg % args if args else msg)
+
+        info = staticmethod(lambda *a, **k: None)
+
+    monkeypatch.setattr(
+        "cholla_chem.resolvers.manual_resolver.logger", _FakeLogger()
+    )
+
+    compound_names = ["cocl2"]
+    name_dict = {
+        "CoCl2": "Cl[Co]Cl",
+        "COCl2": "C(=O)(Cl)Cl",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {}
+    assert any("Ambiguous compound name 'cocl2'" in w for w in warnings)
+
+
+def test_process_name_dict_unambiguous_lowercase_matches():
+    """Lowercase input with only one case variant should match via CI fallback."""
+    compound_names = ["thf"]
+    name_dict = {
+        "THF": "C1CCOC1",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    assert result == {"thf": "C1CCOC1"}
+
+
+def test_process_name_dict_benign_case_collision_resolves():
+    """Case variants with identical SMILES should still resolve via CI fallback."""
+    compound_names = ["thf", "THF"]
+    name_dict = {
+        "THF": "C1CCOC1",
+        "thf": "C1CCOC1",
+    }
+
+    result = process_name_dict(compound_names, name_dict)
+
+    # Both should resolve — exact match for THF, CI fallback for thf
+    # (both map to the same SMILES, so the collision is benign)
+    assert result == {"thf": "C1CCOC1", "THF": "C1CCOC1"}
